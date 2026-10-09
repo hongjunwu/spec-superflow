@@ -182,8 +182,11 @@ describe('execution control plane instructions', () => {
       assert.match(releaseChecklist, assertion, `release checklist asserts ${asset}`);
     }
     assert.match(releaseChecklist,
-      /find "\$SSF_WORKBUDDY_PLUGIN\/skills".*-type d.*= 9/is,
-      'release checklist asserts all nine skills');
+      /find "\$SSF_WORKBUDDY_PLUGIN\/skills".*= "\$\(find skills -mindepth 1 -maxdepth 1 -type d/is,
+      'release checklist compares the installed skill count against the source skills/ count');
+    assert.doesNotMatch(releaseChecklist,
+      /find "\$SSF_WORKBUDDY_PLUGIN\/skills".*= 9/is,
+      'release checklist must not hardcode a skill count');
     for (const runtimeDir of ['scripts', 'docs', 'templates', 'dist', 'hooks']) {
       assert.match(releaseChecklist,
         new RegExp(`test -d "\\$SSF_WORKBUDDY_PLUGIN/${runtimeDir}"`),
