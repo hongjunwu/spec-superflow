@@ -11,7 +11,7 @@ Use this checklist before publishing a new version of `spec-superflow`.
 - `LICENSE` is present
 - `ssf version <semver>` covers all manifests (JSON) + documentation (Markdown/shell)
 - `node scripts/check-version-consistency.mjs` passes (also runs in CI)
-- Verify all nine runtime-dependent canonical skills use the exact release version, and local installer output rewrites them to its bundled `scripts/spec-superflow.mjs`.
+- Verify every runtime-dependent canonical skill (as many as `skills/` holds) uses the exact release version, and local installer output rewrites them to its bundled `scripts/spec-superflow.mjs`.
 - Verify `.github/plugin/marketplace.json` and `.claude-plugin/marketplace.json` versions match
 
 ## Workflow Integrity
@@ -69,7 +69,7 @@ For each example in `docs/examples/`:
     echo "Installed command assets contain the local checkout path" >&2
     exit 1
   fi
-  test "$(find "$SSF_WORKBUDDY_PLUGIN/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = 9
+  test "$(find "$SSF_WORKBUDDY_PLUGIN/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = "$(find skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
   test -d "$SSF_WORKBUDDY_PLUGIN/scripts"
   test -d "$SSF_WORKBUDDY_PLUGIN/docs"
   test -d "$SSF_WORKBUDDY_PLUGIN/templates"
@@ -91,7 +91,7 @@ For each example in `docs/examples/`:
   grep -q 'alwaysApply: false' "$SSF_CODEBUDDY_SMOKE_HOME/rules/phase-guard.md"
   ! grep -q 'npx --yes --package spec-superflow@' "$SSF_CODEBUDDY_SMOKE_HOME/commands/ssf/resume.md"
   grep -q 'Bash(node:\*)' "$SSF_CODEBUDDY_SMOKE_HOME/commands/ssf/resume.md"
-  test "$(find "$SSF_CODEBUDDY_SMOKE_HOME/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = 9
+  test "$(find "$SSF_CODEBUDDY_SMOKE_HOME/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = "$(find skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
   # Uninstall must preserve unrelated skills/settings.
   mkdir -p "$SSF_CODEBUDDY_SMOKE_HOME/skills/other-skill"
   printf -- '---\nname: other-skill\n---\n' > "$SSF_CODEBUDDY_SMOKE_HOME/skills/other-skill/SKILL.md"

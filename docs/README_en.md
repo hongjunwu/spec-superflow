@@ -16,7 +16,7 @@
 
 spec-superflow combines OpenSpec-style planning with Superpowers-style verification discipline in one self-contained plugin. v2 gives new work two entry points: execute a clear, bounded change directly, or approve one short plan before implementation.
 
-Current: `v2.0.1`
+Current: `v2.2.0`
 
 The defaults minimize overhead: execute in the current session, review once at the end, verify once at completion, and keep ordinary debugging inside execution. Subagents, per-wave reviews, and worktrees are explicit choices.
 
@@ -155,7 +155,7 @@ The repository, branch, and path are recorded and checked during recovery. `ssf 
 ### OpenAI Codex CLI / App
 
 ```bash
-codex plugin marketplace add MageByte-Zero/spec-superflow --ref v2.0.1
+codex plugin marketplace add MageByte-Zero/spec-superflow --ref v2.2.0
 codex plugin add spec-superflow@spec-superflow
 ```
 

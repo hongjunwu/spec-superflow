@@ -6,6 +6,8 @@ The format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-09
+
 ### Added
 
 - **Brownfield engineering profile**: `proposal.md` may declare `## Engineering Profile` with `Profile: brownfield`, `Boundaries`, `Compatibility` and `Affected systems`. A brownfield change also ships `technical-design.md` (design items `ARCH-*`/`API-*`/`DB-*`/`MODEL-*`/`INT-*`/`IMPACT-*`/`MIGRATION-*`) and `traceability.json`, and its delta spec Requirement headings carry stable `REQ-*` ids. `standard` changes keep the compact flow and may carry the same two artifacts optionally.

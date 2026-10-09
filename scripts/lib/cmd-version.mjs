@@ -26,6 +26,7 @@ const TEXT_FILES = [
   { file: 'INSTALL.md',             pattern: /(当前发布版本：\*\*v)\d+\.\d+\.\d+(\*\*)/g },
   { file: 'INSTALL.md',             pattern: /(codex plugin marketplace add MageByte-Zero\/spec-superflow --ref v)\d+\.\d+\.\d+(\b)/g },
   { file: 'docs/README_en.md',      pattern: /(Current: `v)\d+\.\d+\.\d+(`)/g },
+  { file: 'docs/README_en.md',      pattern: /(codex plugin marketplace add MageByte-Zero\/spec-superflow --ref v)\d+\.\d+\.\d+(\b)/g },
   { file: 'hooks/session-start',    pattern: /(# v)\d+\.\d+\.\d+(: conditional injection)/g },
   { file: 'llms.txt',               pattern: /(Current version: v)\d+\.\d+\.\d+(\.)/g },
   { file: '.claude/always/phase-guard.md', pattern: /(# spec-superflow v)\d+\.\d+\.\d+( \|)/g },

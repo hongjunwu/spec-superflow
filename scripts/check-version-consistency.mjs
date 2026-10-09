@@ -65,6 +65,7 @@ const TEXT_CHECKS = [
   { file: 'README.md',              extract: /当前版本：`v(\d+\.\d+\.\d+)`/ },
   { file: 'INSTALL.md',             extract: /当前发布版本：\*\*v(\d+\.\d+\.\d+)\*\*/ },
   { file: 'docs/README_en.md',      extract: /Current: `v(\d+\.\d+\.\d+)`/ },
+  { file: 'docs/README_en.md',      extract: /codex plugin marketplace add MageByte-Zero\/spec-superflow --ref v(\d+\.\d+\.\d+)/ },
   { file: 'hooks/session-start',    extract: /# v(\d+\.\d+\.\d+): conditional injection/ },
   { file: 'llms.txt',               extract: /Current version: v(\d+\.\d+\.\d+)\./ },
   { file: '.claude/always/phase-guard.md', extract: /# spec-superflow v(\d+\.\d+\.\d+) \|/ },

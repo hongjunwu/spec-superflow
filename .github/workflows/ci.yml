@@ -55,16 +55,19 @@ jobs:
           set -e
           declare -A SKILLS=( [cline]=.cline/skills [kiro]=.kiro/skills [windsurf]=.windsurf/skills [qwen]=.qwen/skills [amazon-q]=.amazonq/skills [roocode]=.roo/skills [continue]=.continue/skills [pi]=.pi/skills )
           declare -A RULES=( [cline]=.clinerules/phase-guard.md [kiro]=.kiro/steering/phase-guard.md [windsurf]=.windsurf/rules/phase-guard.md [qwen]=.qwen/rules/phase-guard.md [amazon-q]=.amazonq/rules/phase-guard.md [roocode]=.roo/rules/phase-guard.md [continue]=.continue/rules/phase-guard.md )
+          # Count the source skills instead of hardcoding a number, so adding a
+          # skill cannot make this smoke pass while installers silently drop it.
+          expected_skills="$(find "$GITHUB_WORKSPACE/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
           for id in cline kiro windsurf qwen amazon-q roocode continue pi; do
             tmp="$(mktemp -d)"
             ( cd "$tmp" && node "$GITHUB_WORKSPACE/scripts/install-$id.mjs" --local "$GITHUB_WORKSPACE" > /dev/null )
             [ -d "$tmp/${SKILLS[$id]}" ] || { echo "FAIL $id: skills dir missing"; exit 1; }
-            count="$(ls "$tmp/${SKILLS[$id]}" | wc -l | tr -d ' ')"
-            [ "$count" -ge 9 ] || { echo "FAIL $id: only $count skills (expected 9)"; exit 1; }
+            count="$(find "$tmp/${SKILLS[$id]}" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+            [ "$count" -eq "$expected_skills" ] || { echo "FAIL $id: only $count skills (expected $expected_skills)"; exit 1; }
             if [ -n "${RULES[$id]:-}" ]; then
               [ -f "$tmp/${RULES[$id]}" ] || { echo "FAIL $id: phase-guard rule missing"; exit 1; }
             fi
-            echo "OK $id — 9 skills, rule=${RULES[$id]:-none}"
+            echo "OK $id — $count skills, rule=${RULES[$id]:-none}"
           done
           # CodeBuddy deploys to a user-level config dir via --config-dir (not the
           # project-level layout used by the 8 installers above). Verify the
@@ -73,8 +76,8 @@ jobs:
           cb_tmp="$(mktemp -d)"
           node "$GITHUB_WORKSPACE/scripts/install-codebuddy.mjs" --local "$GITHUB_WORKSPACE" --config-dir "$cb_tmp" > /dev/null
           [ -d "$cb_tmp/skills" ] || { echo "FAIL codebuddy: skills dir missing"; exit 1; }
-          cb_count="$(ls "$cb_tmp/skills" | wc -l | tr -d ' ')"
-          [ "$cb_count" -ge 9 ] || { echo "FAIL codebuddy: only $cb_count skills (expected 9)"; exit 1; }
+          cb_count="$(find "$cb_tmp/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+          [ "$cb_count" -eq "$expected_skills" ] || { echo "FAIL codebuddy: only $cb_count skills (expected $expected_skills)"; exit 1; }
           [ -d "$cb_tmp/commands/ssf" ] || { echo "FAIL codebuddy: commands/ssf missing"; exit 1; }
           [ -f "$cb_tmp/rules/phase-guard.md" ] || { echo "FAIL codebuddy: phase-guard missing"; exit 1; }
           [ -f "$cb_tmp/settings.json" ] || { echo "FAIL codebuddy: settings.json missing"; exit 1; }
@@ -83,8 +86,8 @@ jobs:
           ! grep -q 'npx --yes --package spec-superflow@' "$cb_tmp/commands/ssf/resume.md" || { echo "FAIL codebuddy: resume.md still uses npx"; exit 1; }
           grep -q 'Bash(node:\*)' "$cb_tmp/commands/ssf/resume.md" || { echo "FAIL codebuddy: resume.md allowed-tools not rewritten to node"; exit 1; }
           rm -rf "$cb_tmp"
-          echo "OK codebuddy — 9 skills, settings.json SessionStart, commands rewritten, phase-guard scoped"
-          echo "All 9 platform installers passed smoke test."
+          echo "OK codebuddy — $cb_count skills, settings.json SessionStart, commands rewritten, phase-guard scoped"
+          echo "All 9 platform installers passed smoke test ($expected_skills skills each)."
 
   codebuddy-install-smoke:
     name: CodeBuddy Install Smoke (Windows shims)
