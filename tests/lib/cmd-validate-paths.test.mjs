@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -41,11 +41,26 @@ describe('validate commands: spec paths', () => {
     if (tempRoot) rmSync(tempRoot, { recursive: true, force: true });
   });
 
-  it('validate-artifacts uses the bundled add-dark-mode example by default', () => {
+  it('validate-artifacts validates every bundled example by default', () => {
     const result = runNode([LEGACY]);
     assert.equal(result.exitCode, 0, result.stdout + result.stderr);
     assert.match(result.stdout, /Change: add-dark-mode/);
+    assert.match(result.stdout, /Change: brownfield-salary-adjustment/);
+    assert.match(result.stdout, /Change: refactor-auth-boundary/);
+    assert.match(result.stdout, /technical validation/);
+    assert.match(result.stdout, /REQ-001 -> ARCH-001, API-001, DB-001, MODEL-001, IMPACT-001 -> task 1\.1, task 1\.2, task 1\.3/);
     assert.match(result.stdout, /All artifacts validated successfully/);
+  });
+
+  it('validate-artifacts fails the technical gate for a broken brownfield example', () => {
+    const dir = mkdtempSync(join(tempRoot, 'broken-brownfield-'));
+    cpSync(join(process.cwd(), 'docs', 'examples', 'brownfield-salary-adjustment'), dir, { recursive: true });
+    writeFileSync(join(dir, 'traceability.json'), JSON.stringify({ schema_version: 1, profile: 'brownfield', requirements: [], design_items: [], files: [], tasks: [], tests: [] }));
+
+    const result = runNode([LEGACY, dir]);
+    assert.equal(result.exitCode, 1);
+    assert.match(result.stdout + result.stderr, /technical validation/);
+    assert.match(result.stdout + result.stderr, /REQ-001 is missing from requirements/);
   });
 
   it('ssf validate rejects flat specs/<capability>.md', () => {

@@ -294,7 +294,7 @@ describe('cmd-install-workbuddy', () => {
     }));
 
     const result = await installWorkBuddy({ pluginRoot, homeDir, marketplaceName: 'cb_teams_marketplace' });
-    assert.equal(result.skillNames.length, 9);
+    assert.equal(result.skillNames.length, 12);
     assert.deepEqual(result.commandNames, ['ssf:resume', 'ssf:save', 'ssf:switch']);
     for (const runtimeDir of ['scripts', 'docs', 'templates', 'dist', 'hooks']) {
       assert.ok(existsSync(join(result.targetPluginDir, runtimeDir)), `${runtimeDir}/ should be installed`);
@@ -319,7 +319,7 @@ describe('cmd-install-workbuddy', () => {
     process.chdir(tempDir);
     try {
       const plan = planInstall({ homeDir: join(tempDir, 'home') });
-      assert.equal(plan.skillNames.length, 9);
+      assert.equal(plan.skillNames.length, 12);
       assert.equal(plan.skillsDir, join(plan.pluginRoot, 'skills'));
       assert.ok(existsSync(plan.skillsDir));
       assert.notEqual(plan.skillsDir, join(tempDir, 'skills'));

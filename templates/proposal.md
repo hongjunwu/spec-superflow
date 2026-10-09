@@ -24,3 +24,12 @@
 
 - **影响区域**：代码、接口、文档或外部依赖。
 - **完成证明**：用户如何确认问题已解决。
+
+## Engineering Profile
+
+- **Profile**: standard
+- **Boundaries**:
+- **Compatibility**:
+- **Affected systems**:
+
+`standard` 变更留空 Profile 以外各项；`brownfield` 的 Boundaries 可使用 api、database、integration、public-model、permission、migration、impact，并在 Compatibility / Affected systems 写清兼容性承诺与受影响系统。

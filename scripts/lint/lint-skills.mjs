@@ -4,7 +4,7 @@
 
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SKILLS_DIR = join(__dirname, '..', '..', 'skills');
@@ -16,7 +16,8 @@ async function loadRules() {
   const rules = [];
   for (const file of ruleFiles.sort()) {
     try {
-      const mod = await import(join(RULES_DIR, file));
+      // A bare absolute path is not a valid ESM specifier on Windows.
+      const mod = await import(pathToFileURL(join(RULES_DIR, file)).href);
       if (mod.default && typeof mod.default.check === 'function') {
         rules.push(mod.default);
       }
@@ -85,7 +86,7 @@ async function loadTokenRules() {
   const tokenRulesPath = join(RULES_DIR, 'token-rules.mjs');
   if (!existsSync(tokenRulesPath)) return [];
   try {
-    const mod = await import(tokenRulesPath);
+    const mod = await import(pathToFileURL(tokenRulesPath).href);
     return mod.default && typeof mod.default.check === 'function' ? [mod.default] : [];
   } catch (e) {
     console.error(`Warning: failed to load token-rules: ${e.message}`);

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "profile": "brownfield",
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "design_items": ["ARCH-001", "API-001", "DB-001", "MODEL-001", "IMPACT-001"],
+      "task_ids": ["1.1", "1.2", "1.3"],
+      "test_ids": ["TEST-001", "TEST-002", "TEST-003"]
+    }
+  ],
+  "design_items": [
+    {
+      "id": "ARCH-001",
+      "kind": "architecture",
+      "requirements": ["REQ-001"],
+      "files": ["FILE-001"],
+      "risk": "low"
+    },
+    {
+      "id": "API-001",
+      "kind": "api",
+      "requirements": ["REQ-001"],
+      "files": ["FILE-001"],
+      "risk": "high"
+    },
+    {
+      "id": "DB-001",
+      "kind": "database",
+      "requirements": ["REQ-001"],
+      "files": ["FILE-002"],
+      "risk": "high"
+    },
+    {
+      "id": "IMPACT-001",
+      "kind": "impact",
+      "requirements": ["REQ-001"],
+      "files": ["FILE-003"],
+      "risk": "high"
+    },
+    {
+      "id": "MODEL-001",
+      "kind": "model",
+      "requirements": ["REQ-001"],
+      "files": ["FILE-004"],
+      "risk": "low"
+    }
+  ],
+  "files": [
+    { "id": "FILE-001", "path": "services/salary/src/adjustment/handler.mjs" },
+    { "id": "FILE-002", "path": "services/salary/migrations/20261009_salary_adjustment.sql" },
+    { "id": "FILE-003", "path": "services/employee/src/employee/responseMapper.mjs" },
+    { "id": "FILE-004", "path": "services/employee/src/employee/employeeDto.mjs" }
+  ],
+  "tasks": [
+    {
+      "id": "1.1",
+      "requirements": ["REQ-001"],
+      "design_items": ["DB-001"],
+      "files": ["FILE-002"],
+      "tests": ["TEST-001"]
+    },
+    {
+      "id": "1.2",
+      "requirements": ["REQ-001"],
+      "design_items": ["ARCH-001", "API-001"],
+      "files": ["FILE-001"],
+      "tests": ["TEST-002"]
+    },
+    {
+      "id": "1.3",
+      "requirements": ["REQ-001"],
+      "design_items": ["MODEL-001", "IMPACT-001"],
+      "files": ["FILE-003", "FILE-004"],
+      "tests": ["TEST-003"]
+    }
+  ],
+  "tests": [
+    {
+      "id": "TEST-001",
+      "requirements": ["REQ-001"],
+      "design_items": ["DB-001"],
+      "command": "npm --prefix services/salary test -- --test-name-pattern=adjustmentRepository"
+    },
+    {
+      "id": "TEST-002",
+      "requirements": ["REQ-001"],
+      "design_items": ["API-001"],
+      "command": "npm --prefix services/salary test -- --test-name-pattern=adjustmentApi"
+    },
+    {
+      "id": "TEST-003",
+      "requirements": ["REQ-001"],
+      "design_items": ["IMPACT-001"],
+      "command": "npm --prefix services/employee test -- --test-name-pattern=employeeResponse"
+    }
+  ]
+}

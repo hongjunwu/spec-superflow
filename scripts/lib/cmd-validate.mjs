@@ -4,6 +4,7 @@ import { join, basename, dirname, resolve } from 'node:path';
 import { loadConfig } from './config-loader.mjs';
 import { validateSpecPathLayout, relativeSpecPath } from './spec-paths.mjs';
 import { applyDeltaToBaselineDetailed } from './spec-publication.mjs';
+import { formatTechnicalMapping, validateTechnicalChange } from './technical-validation.mjs';
 
 async function getValidator() {
   const mod = await import('../../dist/index.js');
@@ -100,6 +101,15 @@ export async function run(args) {
         });
         hasErrors = true;
       }
+    }
+  }
+
+  const technicalReport = validateTechnicalChange(changeDir);
+  if (technicalReport.applies || technicalReport.issues.length > 0) {
+    printReport('technical validation', technicalReport);
+    if (!technicalReport.valid) hasErrors = true;
+    if (technicalReport.valid && technicalReport.applies) {
+      for (const line of formatTechnicalMapping(technicalReport.traceability)) console.log(`     ↳ ${line}`);
     }
   }
 

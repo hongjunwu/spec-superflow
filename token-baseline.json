@@ -1,107 +1,131 @@
 {
-  "timestamp": "2026-09-20T10:34:48.613Z",
+  "timestamp": "2026-10-09T01:55:11.821Z",
   "note": "Catalog estimate only. Inactive hook sessions emit no context; the hook component measures its active-state message. Other components are loaded conditionally. This is not a runtime session, repeated-read, subagent, latency, or cost benchmark.",
   "components": [
     {
       "path": "hooks/session-start",
       "label": "hook active context (inactive sessions inject 0)",
       "lines": 1,
-      "chars": 70,
-      "estimatedTokens": 18,
+      "chars": 97,
+      "estimatedTokens": 25,
       "measurement": "shell-message"
     },
     {
       "path": ".claude/always/phase-guard.md",
       "label": "phase-guard (claude)",
       "lines": 3,
-      "chars": 177,
-      "estimatedTokens": 61,
+      "chars": 184,
+      "estimatedTokens": 65,
       "measurement": "file-source"
     },
     {
       "path": "GEMINI.md",
       "label": "phase-guard (gemini)",
       "lines": 13,
-      "chars": 712,
-      "estimatedTokens": 178,
+      "chars": 792,
+      "estimatedTokens": 198,
       "measurement": "file-source"
     },
     {
       "path": "skills/workflow-start/SKILL.md",
       "label": "skill: workflow-start",
-      "lines": 64,
-      "chars": 4904,
-      "estimatedTokens": 1226,
+      "lines": 44,
+      "chars": 5547,
+      "estimatedTokens": 1387,
       "measurement": "file-source"
     },
     {
       "path": "skills/need-explorer/SKILL.md",
       "label": "skill: need-explorer",
-      "lines": 74,
-      "chars": 2955,
-      "estimatedTokens": 739,
+      "lines": 78,
+      "chars": 3296,
+      "estimatedTokens": 824,
       "measurement": "file-source"
     },
     {
       "path": "skills/spec-writer/SKILL.md",
       "label": "skill: spec-writer",
-      "lines": 84,
-      "chars": 4947,
-      "estimatedTokens": 1237,
+      "lines": 96,
+      "chars": 7121,
+      "estimatedTokens": 1781,
       "measurement": "file-source"
     },
     {
       "path": "skills/contract-builder/SKILL.md",
       "label": "skill: contract-builder",
-      "lines": 90,
-      "chars": 4402,
-      "estimatedTokens": 1101,
+      "lines": 95,
+      "chars": 5238,
+      "estimatedTokens": 1310,
       "measurement": "file-source"
     },
     {
       "path": "skills/build-executor/SKILL.md",
       "label": "skill: build-executor",
-      "lines": 72,
-      "chars": 7052,
-      "estimatedTokens": 1763,
+      "lines": 84,
+      "chars": 9978,
+      "estimatedTokens": 2495,
       "measurement": "file-source"
     },
     {
       "path": "skills/bug-investigator/SKILL.md",
       "label": "skill: bug-investigator",
-      "lines": 102,
-      "chars": 5743,
-      "estimatedTokens": 1436,
+      "lines": 110,
+      "chars": 6620,
+      "estimatedTokens": 1655,
       "measurement": "file-source"
     },
     {
       "path": "skills/code-reviewer/SKILL.md",
       "label": "skill: code-reviewer",
-      "lines": 86,
-      "chars": 5089,
-      "estimatedTokens": 1273,
+      "lines": 92,
+      "chars": 6105,
+      "estimatedTokens": 1527,
       "measurement": "file-source"
     },
     {
       "path": "skills/release-archivist/SKILL.md",
       "label": "skill: release-archivist",
-      "lines": 34,
-      "chars": 3356,
-      "estimatedTokens": 839,
+      "lines": 44,
+      "chars": 5047,
+      "estimatedTokens": 1262,
       "measurement": "file-source"
     },
     {
       "path": "skills/spec-merger/SKILL.md",
       "label": "skill: spec-merger",
-      "lines": 74,
-      "chars": 4508,
-      "estimatedTokens": 1127,
+      "lines": 78,
+      "chars": 4849,
+      "estimatedTokens": 1213,
+      "measurement": "file-source"
+    },
+    {
+      "path": "skills/technical-designer/SKILL.md",
+      "label": "skill: technical-designer",
+      "lines": 77,
+      "chars": 4663,
+      "estimatedTokens": 1168,
+      "measurement": "file-source"
+    },
+    {
+      "path": "skills/impact-analyzer/SKILL.md",
+      "label": "skill: impact-analyzer",
+      "lines": 71,
+      "chars": 3675,
+      "estimatedTokens": 919,
+      "measurement": "file-source"
+    },
+    {
+      "path": "skills/contract-validator/SKILL.md",
+      "label": "skill: contract-validator",
+      "lines": 64,
+      "chars": 3746,
+      "estimatedTokens": 937,
       "measurement": "file-source"
     }
   ],
   "totals": {
-    "lines": 697,
-    "chars": 43915,
-    "estimatedTokens": 10998
+    "lines": 950,
+    "chars": 66958,
+    "estimatedTokens": 16766
   }
 }

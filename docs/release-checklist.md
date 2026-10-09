@@ -39,7 +39,8 @@ For each example in `docs/examples/`:
 - `specs/` define testable behavior
 - `design.md` defines technical shape and constraints
 - `tasks.md` defines execution order
-- `execution-contract.md` defines approved build rules
+- `execution-contract.md` defines approved build rules (legacy examples only; a v2 change uses its approved execution plan instead)
+- Brownfield examples additionally ship `technical-design.md` + `traceability.json`, and `ssf validate <example>` passes
 
 ## CLI And Config
 
@@ -49,7 +50,7 @@ For each example in `docs/examples/`:
 - `node scripts/spec-superflow.mjs --help` — all subcommands listed
 - Verify `commands/ssf/resume.md`, `commands/ssf/switch.md`, and `commands/ssf/save.md` are complete canonical Markdown command assets.
 - `node --test tests/lib/recovery-command-assets.test.mjs` — scans every command asset for checkout-specific absolute paths; any failure is a release blocker.
-- `node scripts/spec-superflow.mjs install-workbuddy --dry-run` — finds all 9 skills, all 3 recovery commands, and target paths.
+- `node scripts/spec-superflow.mjs install-workbuddy --dry-run` — finds all 12 skills, all 3 recovery commands, and target paths.
 - Run `install-workbuddy` against a temporary home and verify it installs `ssf:resume`, `ssf:switch`, and `ssf:save` as complete command assets.
 
   ```bash

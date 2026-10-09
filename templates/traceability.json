@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "profile": "brownfield",
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "design_items": ["API-001"],
+      "task_ids": ["1.1"],
+      "test_ids": ["TEST-001"]
+    }
+  ],
+  "design_items": [
+    {
+      "id": "API-001",
+      "kind": "api",
+      "requirements": ["REQ-001"],
+      "files": ["FILE-001"],
+      "risk": "high"
+    }
+  ],
+  "files": [
+    { "id": "FILE-001", "path": "src/path/to/file.ts" }
+  ],
+  "tasks": [
+    {
+      "id": "1.1",
+      "requirements": ["REQ-001"],
+      "design_items": ["API-001"],
+      "files": ["FILE-001"],
+      "tests": ["TEST-001"]
+    }
+  ],
+  "tests": [
+    {
+      "id": "TEST-001",
+      "requirements": ["REQ-001"],
+      "design_items": ["API-001"],
+      "command": "npm test"
+    }
+  ]
+}

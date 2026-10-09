@@ -6,8 +6,28 @@ The format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 
+### Added
+
+- **Brownfield engineering profile**: `proposal.md` may declare `## Engineering Profile` with `Profile: brownfield`, `Boundaries`, `Compatibility` and `Affected systems`. A brownfield change also ships `technical-design.md` (design items `ARCH-*`/`API-*`/`DB-*`/`MODEL-*`/`INT-*`/`IMPACT-*`/`MIGRATION-*`) and `traceability.json`, and its delta spec Requirement headings carry stable `REQ-*` ids. `standard` changes keep the compact flow and may carry the same two artifacts optionally.
+- **Technical validation gate**: a brownfield plan cannot enter executing or be re-approved until requirement, design, boundary, file and test coverage hold. The gate rejects unknown, duplicate or mis-prefixed ids, a design item without its level-three heading, a design item placed under the wrong `##` section, missing required fields (`api`, `database`, `impact`, `architecture`), unsafe file paths, a task whose `Refs:` disagrees with the map, and a task without a proof command or without naming the file it changes.
+- **`ssf technical conflict record <change-dir> --task --summary --affected --why --next`** records a Brownfield conflict as a plan-scoped report. An open conflict blocks a passing review and blocks `workflow complete`, including `--accept-risk`.
+- **Three skills**: `technical-designer` (design + map), `impact-analyzer` (existing callers, data, integration and regression surface), and `contract-validator` (coverage gate before approval). `spec-writer` and `workflow-start` hand the brownfield path to them.
+- **Plan-scoped `technical-validation.json`** runtime evidence: profile, validator version, status, technical contract hash, plan hash and revision, and the coverage mapping, written with the plan on create, revise and resync.
+- `ssf validate` prints the coverage mapping (`REQ-001 -> API-001 -> task 1.1 -> TEST-001`) for a change that carries technical artifacts, and `npm run validate` now validates every bundled example instead of only the first.
+- Example change `docs/examples/brownfield-salary-adjustment` and templates `templates/technical-design.md` / `templates/traceability.json`.
+
+### Changed
+
+- Execution plans bind the approved design: the brownfield gate follows the change's Engineering Profile instead of the plan's schema, so every plan shape carries matching technical evidence, and `plan.technical_validation` records the validator version and technical contract hash. Standard changes keep their existing plan semantics and are not bound.
+- `computeArtifactsHash` includes `technical-design.md` and `traceability.json` for brownfield changes, so editing an approved design invalidates the plan.
+- `build-executor` documents the allowed work inside the approved boundary and the mandatory stop-and-record rule; `installer`/runtime distribution includes `ssf technical` and both new templates, and the skill count in the docs is 9 → 12.
+
 ### Fixed
 
+- `ssf execution revise` no longer drops the brownfield gate: the revised plan used to lose `schema_version` and `technical_validation`, which skipped technical validation, conflict blocking and the review-time unmapped-file check. Those checks are now profile-driven, so a revised plan keeps its obligations.
+- Re-approval after a design edit decides whether a plan failure is a refreshed snapshot by exact failure identity instead of a substring match, so a renamed failure can no longer qualify itself.
+- `ssf validate` reports a missing `tasks.md` as an issue instead of failing with a raw ENOENT, and a standard change that carries a technical design is validated rather than rejected outright.
+- `scripts/lint/lint-skills.mjs` loaded its rules through a bare absolute path, which is not a valid ESM specifier on Windows, so every rule silently reported zero issues there.
 - Record the change's start commit and branch when `workflow start` enters executing, and resolve the final review range from that anchor, so a repository whose trunk is not named `main`/`master` can record its final review and complete instead of failing with "Final review requires an unambiguous recorded target branch". An isolation context recorded later no longer moves the range origin.
 - Allow a change that entered executing before the start anchor existed to record it once with `ssf state set <change-dir> review_base <start-commit>`. Both anchor fields are write-once: a recorded anchor cannot be overwritten or cleared, so the reviewed range cannot be narrowed through `ssf state set`.
 - Accept a relative `<change-dir>` for every `ssf execution` subcommand. `ssf execution review` previously wrote the report snapshot to the directory the relative path pointed at, then validated it against the change directory's realpath, so the documented `ssf execution review changes/<name> ...` form always failed with an ENOENT on a doubled path.

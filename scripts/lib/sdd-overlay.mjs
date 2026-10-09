@@ -24,6 +24,7 @@ export function getOverlayPaths(changeDir) {
     executionRecommendation: join(root, 'execution-recommendation.json'),
     workflowSelection: join(root, 'workflow-selection.json'),
     reviews: join(root, 'reviews'),
+    conflicts: join(root, 'conflicts'),
   };
 }
 
@@ -47,6 +48,8 @@ export function getPlanScopedPaths(changeDir, plan) {
     reviews: join(planRoot, 'reviews'),
     repairState: join(planRoot, 'repair-state'),
     adjudications: join(planRoot, 'adjudications'),
+    conflicts: join(planRoot, 'conflicts'),
+    technicalValidation: join(planRoot, 'technical-validation.json'),
   };
 }
 

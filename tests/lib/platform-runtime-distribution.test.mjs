@@ -2,20 +2,23 @@
 // with installer and platform inventory fixtures.
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { PLATFORM_RUNTIME_INVENTORY, ZCODE_COMPATIBILITY_PATH } from '../../scripts/lib/platform-runtime-inventory.mjs';
 import { installPlatform } from '../../scripts/lib/install.mjs';
+import { COMMANDS } from '../../scripts/spec-superflow.mjs';
 
 const ROOT = process.cwd();
 const CLI = join(ROOT, 'scripts', 'spec-superflow.mjs');
 const SOURCE_RUNTIME_COMMAND = 'SSF';
 const BUNDLED_RUNTIME_DEFINITION = 'node "<plugin-root>/scripts/spec-superflow.mjs"';
 const FIXED_NPM_RUNTIME = /npx --yes --package spec-superflow@\d+\.\d+\.\d+ ssf/;
-const BARE_SSF_RUNTIME = /\bssf\s+(?:audit|checkpoint|config|debug|doctor|execution|finish|handoff|inject|isolate|list|resume|runtime|save|state|switch|sync|validate|version|workflow)\b/;
+// Derived from the CLI command table so a new subcommand cannot ship deployed
+// skill bodies that still call a bare `ssf` from PATH.
+const BARE_SSF_RUNTIME = new RegExp(`\\bssf\\s+(?:${Object.keys(COMMANDS).join('|')})\\b`);
 const RUNTIME_SKILLS = [
   'workflow-start',
   'need-explorer',
@@ -26,6 +29,9 @@ const RUNTIME_SKILLS = [
   'bug-investigator',
   'release-archivist',
   'spec-merger',
+  'technical-designer',
+  'impact-analyzer',
+  'contract-validator',
 ];
 
 function skill(name) {
@@ -75,6 +81,26 @@ describe('canonical skill runtime protocol', () => {
 
     assert.match(content, /runtime asset read skills\/build-executor\/implementer-prompt\.md/);
     assert.match(content, /runtime asset read skills\/code-reviewer\/code-reviewer-prompt\.md/);
+  });
+
+  it('deploys the brownfield technical design and traceability templates', async () => {
+    const target = mkdtempSync(join(tmpdir(), 'ssf-brownfield-assets-'));
+    try {
+      await installPlatform('cline', { local: ROOT, cwd: target });
+      for (const template of ['technical-design.md', 'traceability.json']) {
+        const installed = join(target, '.cline', 'spec-superflow', 'templates', template);
+        assert.ok(existsSync(installed), `${template} should be installed with the runtime tree`);
+        const output = execFileSync(process.execPath, [
+          join(target, '.cline', 'spec-superflow', 'scripts', 'spec-superflow.mjs'),
+          'runtime', 'asset', 'read', `templates/${template}`,
+        ], { cwd: target, encoding: 'utf8' });
+        assert.ok(output.trim().length > 0, `${template} should be readable through the runtime asset allowlist`);
+      }
+      const designer = readFileSync(join(target, '.cline', 'skills', 'technical-designer', 'SKILL.md'), 'utf8');
+      assert.match(designer, /runtime asset read templates\/technical-design\.md/);
+    } finally {
+      rmSync(target, { recursive: true, force: true });
+    }
   });
 
   it('keeps reviewer prompts on the same bundled runtime', () => {

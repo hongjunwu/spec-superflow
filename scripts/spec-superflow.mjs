@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { realpathSync } from 'node:fs';
 
-const COMMANDS = {
+// Exported so distribution checks can assert that every command a deployed
+// skill may call is also rewritten to the bundled runtime.
+export const COMMANDS = {
   list:           () => import('./lib/cmd-list.mjs'),
   validate:       () => import('./lib/cmd-validate.mjs'),
   doctor:         () => import('./lib/cmd-doctor.mjs'),
@@ -28,6 +30,7 @@ const COMMANDS = {
   switch:         () => import('./lib/cmd-switch.mjs'),
   runtime:        () => import('./lib/cmd-runtime.mjs'),
   workflow:       () => import('./lib/cmd-workflow.mjs'),
+  technical:      () => import('./lib/cmd-technical.mjs'),
   'install-cursor': () => import('./lib/cmd-install-cursor.mjs'),
   'install-workbuddy': () => import('./lib/cmd-install-workbuddy.mjs'),
   'install-cline':    () => import('./lib/cmd-install-cline.mjs'),
@@ -57,6 +60,8 @@ Commands:
                         Run final verification once and record verified completion
   workflow complete <dir> --accept-risk --confirm --reason <decision>
                         Record accepted risk without forging verification success
+  technical conflict record <dir> --task <id> --summary <text> --affected <id,...> --why <text> --next <text>
+                        Record a Brownfield technical conflict for the current plan
   list                  List all changes and their status
   validate <dir>        Validate artifacts in a change directory
   doctor                Health check (versions, hooks, skills, docs)

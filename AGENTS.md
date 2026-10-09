@@ -45,13 +45,16 @@ TypeScript interfaces + regex-based parsers. Compiles to `dist/` (ES2022 + NodeN
 
 ### Skills (`skills/`)
 
-9 skills, one per directory. Each contains a `SKILL.md` that Codex loads as an instruction set:
+12 skills, one per directory. Each contains a `SKILL.md` that Codex loads as an instruction set:
 
 | Skill | Phase | Purpose |
 |-------|-------|---------|
 | `workflow-start` | Entry | Content-level state detection, 8-state routing, blocks illegal transitions |
 | `need-explorer` | Exploring | One-question-at-a-time elicitation, 2-3 approach comparison with recommendation |
 | `spec-writer` | Specifying | Generate planning artifacts + Schema engine validation |
+| `technical-designer` | Specifying | Brownfield `technical-design.md` + `traceability.json` |
+| `impact-analyzer` | Specifying | Existing-caller / data / integration / regression impact analysis |
+| `contract-validator` | Specifying | Traceability coverage gate that blocks incomplete Brownfield plans |
 | `contract-builder` | Bridging | Parsing engine auto-extracts 4 planning artifacts → compresses into `execution-contract.md` |
 | `build-executor` | Executing | TDD Iron Law + SDD subagent-driven development + Review Gates |
 | `bug-investigator` | Debugging | 4-phase root cause analysis. 3+ fix failures → question architecture → escalate |
@@ -120,7 +123,7 @@ exploring → specifying → bridging → approved-for-build → executing → c
 - **Content-level stale detection** — `workflow-start` compares proposal scope vs contract intent lock, not file timestamps.
 - **Self-contained** — does not require OpenSpec or Superpowers to be installed. Absorbed concepts are reimplemented here.
 - **Zero runtime dependencies** — only TypeScript as devDependency.
-- **Multi-platform, single source** — Same 9 skills across Claude Code, Cursor, Codex CLI/App, Copilot CLI, Gemini CLI, OpenCode, WorkBuddy, and Trae. Platform-specific wiring is isolated to hooks, plugin manifests, local skill directories, and installers (`.claude-plugin/`, `.cursor-plugin/`, `.codex-plugin/`, `.github/plugin/`, `.opencode/`, `.agents/`, `gemini-extension.json`, `scripts/lib/cmd-install-workbuddy.mjs`).
+- **Multi-platform, single source** — Same 12 skills across Claude Code, Cursor, Codex CLI/App, Copilot CLI, Gemini CLI, OpenCode, WorkBuddy, and Trae. Platform-specific wiring is isolated to hooks, plugin manifests, local skill directories, and installers (`.claude-plugin/`, `.cursor-plugin/`, `.codex-plugin/`, `.github/plugin/`, `.opencode/`, `.agents/`, `gemini-extension.json`, `scripts/lib/cmd-install-workbuddy.mjs`).
 
 ## CI/CD (`.github/workflows/ci.yml`)
 

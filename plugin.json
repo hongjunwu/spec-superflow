@@ -27,10 +27,13 @@
     "./skills/build-executor",
     "./skills/code-reviewer",
     "./skills/contract-builder",
+    "./skills/contract-validator",
+    "./skills/impact-analyzer",
     "./skills/need-explorer",
     "./skills/release-archivist",
     "./skills/spec-merger",
     "./skills/spec-writer",
+    "./skills/technical-designer",
     "./skills/workflow-start"
   ]
 }

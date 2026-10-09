@@ -29,10 +29,13 @@ const SPEC_SUPERFLOW_SKILLS = [
   'build-executor',
   'code-reviewer',
   'contract-builder',
+  'contract-validator',
+  'impact-analyzer',
   'need-explorer',
   'release-archivist',
   'spec-merger',
   'spec-writer',
+  'technical-designer',
   'bug-investigator',
 ];
 

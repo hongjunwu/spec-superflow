@@ -101,15 +101,18 @@ ssf workflow complete changes/add-session-refresh \
 
 实现默认在当前会话串行完成，最后审查完整 Git range。失败审查必须使用稳定 issue ID；同一问题连续三次仍未解决时才进入人工裁决，不把无关问题累计成死循环。
 
-## 9 个 Skills
+## 12 个 Skills
 
-Skill 是按需加载的职责模块，不是每次都要走完的九个阶段。新任务只调用当前工作需要的 skill；旧状态机和契约规则仅用于恢复已有变更。
+Skill 是按需加载的职责模块，不是每次都要走完的固定阶段。新任务只调用当前工作需要的 skill；旧状态机和契约规则仅用于恢复已有变更。
 
 | Skill | 作用 | v2 中何时使用 |
 |---|---|---|
 | `workflow-start` | 识别新任务或恢复已有 change，选择 `direct` / `planned` 并建立执行上下文 | 显式启用 spec-superflow 时的入口；普通编码会话不自动激活 |
 | `need-explorer` | 澄清问题、范围、非目标和成功标准，比较可选方案 | 需求模糊或需要先做取舍时按需使用 |
 | `spec-writer` | 编写 `proposal.md` 与 `tasks.md`；只在需要时增加 specs/design | `planned` 路径需要形成可批准计划时使用 |
+| `technical-designer` | 为 brownfield 变更编写 `technical-design.md` 与 `traceability.json`，把需求连到设计项、文件、任务和测试 | proposal 声明 `Engineering Profile: brownfield` 时，在批准前使用 |
+| `impact-analyzer` | 调查已有调用方、数据、集成与回归范围，声明 `IMPACT-*` 影响项 | brownfield 变更触及既有行为或兼容性承诺时使用 |
+| `contract-validator` | 运行追溯覆盖门禁，阻止不完整的 brownfield 计划进入批准或执行 | brownfield 计划批准前，以及设计改动后重新校验时使用 |
 | `build-executor` | 按已授权范围实现、运行相关验证并记录必要进度 | `direct` 和已批准的 `planned` 都进入这里；默认当前会话连续执行 |
 | `bug-investigator` | 复现问题、追踪根因、验证最小修复，避免试错循环 | 执行中遇到缺陷或测试失败时调用；新任务仍停留在 `executing` |
 | `code-reviewer` | 审查完整 Git range，验证范围、正确性和实现质量 | Native 默认只做一次最终审查；逐波审查仅在显式选择时使用 |
@@ -123,6 +126,9 @@ Skill 是按需加载的职责模块，不是每次都要走完的九个阶段�
 Direct:  workflow-start → build-executor → release-archivist
 Planned: need-explorer? → spec-writer → workflow-start → build-executor
          → code-reviewer → spec-merger? → release-archivist
+Brownfield (planned 的子路径):
+         need-explorer? → spec-writer → technical-designer → impact-analyzer
+         → contract-validator → workflow-start → build-executor → …
 Bug:     build-executor → bug-investigator → build-executor
 Legacy:  按已有状态恢复；必要时才进入 contract-builder
 ```

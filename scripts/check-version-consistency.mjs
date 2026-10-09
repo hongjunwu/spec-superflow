@@ -9,6 +9,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ssfSubcommandAlternation } from './lib/runtime-rewrite.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -88,6 +89,7 @@ for (const check of TEXT_CHECKS) {
 const RUNTIME_FILES = [
   'workflow-start', 'need-explorer', 'spec-writer', 'contract-builder',
   'build-executor', 'code-reviewer', 'bug-investigator', 'release-archivist', 'spec-merger',
+  'technical-designer', 'impact-analyzer', 'contract-validator',
 ].map(skill => `skills/${skill}/SKILL.md`).concat([
   'skills/build-executor/implementer-prompt.md',
   'skills/build-executor/re-review-prompt.md',
@@ -106,9 +108,9 @@ for (const file of RUNTIME_FILES) {
   const content = readFileSync(fp, 'utf8');
   if (/npx --yes --package spec-superflow@\d+\.\d+\.\d+ ssf/.test(content)) {
     errors.push({ file, found: 'FIXED_NPM_RUNTIME_FOUND', expected: 'bundled runtime' });
-  } else if (/\bssf\s+(?:audit|checkpoint|config|debug|doctor|execution|finish|handoff|inject|isolate|list|resume|runtime|save|state|switch|sync|validate|version|workflow)\b/.test(content)) {
+  } else if (new RegExp(`\\bssf\\s+(?:${ssfSubcommandAlternation()})\\b`).test(content)) {
     errors.push({ file, found: 'PATH_RUNTIME_FOUND', expected: 'bundled runtime' });
-  } else if (!content.includes('node "<plugin-root>/scripts/spec-superflow.mjs"') || !/\bSSF\s+(?:audit|checkpoint|config|debug|doctor|execution|finish|handoff|inject|isolate|list|resume|runtime|save|state|switch|sync|validate|version|workflow)\b/.test(content)) {
+  } else if (!content.includes('node "<plugin-root>/scripts/spec-superflow.mjs"') || !new RegExp(`\\bSSF\\s+(?:${ssfSubcommandAlternation()})\\b`).test(content)) {
     errors.push({ file, found: 'SOURCE_RUNTIME_COMMAND_NOT_FOUND', expected: 'bundled SSF runtime' });
   }
 }

@@ -16,6 +16,9 @@ const SKILLS = [
   'code-reviewer',
   'release-archivist',
   'spec-merger',
+  'technical-designer',
+  'impact-analyzer',
+  'contract-validator',
 ];
 
 function readSkill(skill) {

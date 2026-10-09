@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, lstatSync, realpathSync } from 'no
 import { execFileSync, spawnSync } from 'node:child_process';
 import { resolve, relative, isAbsolute, sep } from 'node:path';
 import { parseTasks } from './task-parser.mjs';
-import { createPlan, readPlan, validatePlan, writePlan, writePlanRevision, describeReviews } from './execution-plan.mjs';
+import { blockingPlanFailures, createPlan, readPlan, validatePlan, writePlan, writePlanRevision, describeReviews } from './execution-plan.mjs';
 import { readIsolationContext, resolveIsolationChange } from './isolation-context.mjs';
 import { computeArtifactsHash, computeContractHash } from './hash.mjs';
 import { runGuard } from '../guard/guard.mjs';
@@ -22,6 +22,8 @@ import {
   isDirectWorkflowReceipt,
 } from './workflow-recommendation.mjs';
 import { readState, writeState } from './state-loader.mjs';
+import { isBrownfieldChange, TECHNICAL_VALIDATOR_VERSION, validateTechnicalChange } from './technical-validation.mjs';
+import { listOpenTechnicalConflicts } from './technical-conflicts.mjs';
 
 const OPTIONS = {
   path: { type: 'string' },
@@ -182,6 +184,8 @@ function start(dir, values) {
     }
     const tasks = parseTasks(readFileSync(join(dir, 'tasks.md'), 'utf8'));
     if (!tasks.length || tasks.some(task => !task.id || !/^[ xX]$/.test(task.marker)) || new Set(tasks.map(task => task.id)).size !== tasks.length) throw new Error('tasks.md needs unique numbered checkbox tasks');
+    const technical = validateTechnicalChange(dir);
+    if (!technical.valid) throw new Error(`Technical validation failed: ${technical.issues.map(entry => `${entry.path}: ${entry.message}`).join('; ')}`);
     const mode = values.mode ?? existing?.mode ?? 'inline';
     if (!['inline', 'batch-inline', 'sdd'].includes(mode)) throw new UsageError('Invalid execution mode');
     if (mode === 'sdd' && values.mode !== 'sdd' && !existing) throw new Error('Delegation requires explicit selection');
@@ -189,14 +193,18 @@ function start(dir, values) {
     if (existing && existing.schema_version !== 2) throw new Error('Legacy plan must be revised with its existing commands');
     const validation = existing ? validatePlan(dir, existing) : null;
     if (validation?.valid && mode === existing.mode) return print({ ok: true, state: state.state, plan: existing }, values.json);
-    if (validation?.failures.some(failure => !/artifacts hash mismatch|contract hash mismatch/.test(failure))) throw new Error('Plan evidence is invalid; recover it instead of resetting review history');
+    const blocking = blockingPlanFailures(validation?.failures ?? []);
+    if (blocking.length > 0) throw new Error(`Plan evidence is invalid; recover it instead of resetting review history: ${blocking.join('; ')}`);
     state.workflow = 'full'; state.workflow_variant = 'planned';
     // Construct before mutating state. The persisted plan holds the one approval
     // and derives the serial task list directly from tasks.md.
     const plan = createPlan(dir, { schemaVersion: 2, mode, source: 'approved-plan', rationale: reason,
       reviewPolicy: mode === 'sdd' ? 'wave' : 'final', revision: (existing?.revision ?? 0) + 1,
       waves: [{ id: 'implementation', strategy: 'serial', tasks: tasks.map(task => task.id), depends_on: [] }],
-      workflow: 'full' });
+      workflow: 'full', technicalValidation: technical.profile === 'brownfield' ? {
+        profile: 'brownfield', validator_version: TECHNICAL_VALIDATOR_VERSION,
+        technical_contract_hash: technical.technical_contract_hash, status: 'pass',
+      } : undefined });
     writeState(dir, state);
     if (existing) writePlanRevision(dir, plan, existing); else writePlan(dir, plan);
   }
@@ -231,6 +239,10 @@ function complete(dir, values) {
   if (state.workflow_variant === 'planned') {
     const plan = readPlan(dir), validation = validatePlan(dir, plan);
     if (!validation.valid) throw new Error(validation.failures.join('; '));
+    // Profile-driven: an open conflict blocks completion even if the plan was
+    // replaced by a shape that no longer records the technical evidence.
+    const conflicts = isBrownfieldChange(dir) ? listOpenTechnicalConflicts(dir, plan) : [];
+    if (conflicts.length > 0) throw new Error(`Unresolved technical conflicts block completion: ${conflicts.map(conflict => conflict.task_id).join(', ')}`);
     const invalidEvidence = describeReviews(dir, plan).flatMap(review => review.blockers);
     if (invalidEvidence.length) throw new Error(invalidEvidence.join('; '));
   } else {

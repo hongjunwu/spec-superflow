@@ -18,7 +18,7 @@
 //   │   └── package.json
 //   ├── skills/                      ← deployed skills (paths rewritten; other skills preserved)
 //   │   ├── workflow-start/
-//   │   └── ... (9 skills)
+//   │   └── ... (all skills in skills/)
 //   ├── commands/ssf/                ← canonical recovery command adapters
 //   │   ├── resume.md                (npx→node <pluginRoot>/scripts/spec-superflow.mjs rewritten)
 //   │   ├── save.md                  (allowed-tools: Bash(node:*))

@@ -11,6 +11,8 @@ Before executing a CLI line below, replace its leading `SSF` with `node "<plugin
 
 For workflow_variant planned, read the generated execution plan and current task only; approval is already in the plan. Run `SSF isolate <change-dir>` before code edits, defaulting to a feature branch. No contract, recommendation or DP-4 is required. For other paths read the workflow receipt first. Full/legacy Hotfix require the approved execution contract; read linked requirements/design only for the current task. Quick/direct Hotfix/Tweak use their bounded request and verification strategy. Lightweight follows its receipt's focused review and verification requirements.
 
+For a Brownfield plan, read the task's `Refs:` and `traceability.json` entries first. Inside that boundary you may locate code, choose local implementation details, add contract-preserving code and tests, refactor locally and reorder work; you must not change API contracts, database semantics, permissions, compatibility, integrations, or unmapped files. If the code conflicts with the approved design, stop and record it: `SSF technical conflict record <dir> --task <id> --summary "<conflict>" --affected "<ids>" --why "<decision needed>" --next "<replan action>"`. Replan and reapproval create a new plan; never work around a conflict.
+
 ## Preflight
 
 Legacy Full/Hotfix run `SSF isolate <change-dir>` before edits and use the returned absolute checkout path for every command. The default is a feature branch in the current checkout; create a worktree only when the user explicitly selects `--worktree`. Failure blocks edits in protected branches; preserve an existing isolation and diagnose initialization failures. Direct paths do not require isolation or physical finish.

@@ -421,8 +421,8 @@ describe('cmd-uninstall-codebuddy', () => {
     assert.ok(existsSync(ssfCommandsDir), 'commands/ssf dir preserved (non-empty)');
   });
 
-  it('removes all 9 spec-superflow skill directories on uninstall', async () => {
-    const allSkills = ['workflow-start','build-executor','code-reviewer','contract-builder','need-explorer','release-archivist','spec-merger','spec-writer','bug-investigator'];
+  it('removes every spec-superflow skill directory on uninstall', async () => {
+    const allSkills = ['workflow-start','build-executor','code-reviewer','contract-builder','contract-validator','impact-analyzer','need-explorer','release-archivist','spec-merger','spec-writer','technical-designer','bug-investigator'];
     const pluginRoot = makePluginRoot({ skills: allSkills });
     const configDir = join(tempDir, 'cb');
     await installCodeBuddy({ pluginRoot, configDir, applyPath: noopApplyPath });

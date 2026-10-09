@@ -2,7 +2,7 @@
 
 spec-superflow 共支持 **19 个** AI 编程平台。每个平台按三层接入：
 
-- **Skills** — 9 个 skill 部署到平台技能目录（`${CLAUDE_PLUGIN_ROOT}` 重写为绝对路径）。
+- **Skills** — 12 个 skill 部署到平台技能目录（`${CLAUDE_PLUGIN_ROOT}` 重写为绝对路径）。
 - **Rules** — phase-guard 规则文件部署到平台规则目录，被平台自动加载为常驻上下文（守卫机制）。
 - **Hooks** — SessionStart 上下文注入钩子（仅在该平台原生支持且已验证时接入）。
 

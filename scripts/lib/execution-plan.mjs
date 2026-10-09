@@ -8,8 +8,47 @@ import { computeArtifactsHash, computeContractHash } from './hash.mjs';
 import { hashReceipt } from './execution-recommendation.mjs';
 import { getOverlayPaths, getPlanScopedPaths } from './sdd-overlay.mjs';
 import { readState } from './state-loader.mjs';
+import {
+  TECHNICAL_VALIDATOR_VERSION,
+  formatTechnicalMapping,
+  isBrownfieldChange,
+  readTraceability,
+  technicalValidationEvidence,
+  validateTechnicalChange,
+} from './technical-validation.mjs';
+import { assertTechnicalDiffMapped, listOpenTechnicalConflicts } from './technical-conflicts.mjs';
 
 export const EXECUTION_MODES = ['inline', 'batch-inline', 'sdd'];
+
+// Failures that describe a planning snapshot that moved on rather than corrupted
+// or missing evidence. Re-approval replaces exactly these; every other failure
+// stays binding. Compared by exact message so a renamed failure cannot silently
+// qualify itself through a substring match.
+const STALE_FAILURES = new Set([
+  'execution plan is stale: artifacts hash mismatch',
+  'execution plan is stale: contract hash mismatch',
+  'technical contract hash mismatch',
+]);
+
+export function blockingPlanFailures(failures = []) {
+  return failures.filter(failure => !STALE_FAILURES.has(failure));
+}
+
+/**
+ * Runtime evidence for the approved design. The plan holds the binding summary;
+ * this plan-scoped file records the full snapshot a reviewer would otherwise
+ * have to re-run the gate to see.
+ */
+function technicalValidationEvidenceFile(changeDir, plan) {
+  if (!isObject(plan?.technical_validation)) return null;
+  return `${JSON.stringify({
+    ...plan.technical_validation,
+    plan_hash: plan.hash,
+    plan_revision: plan.revision,
+    recorded_at: new Date().toISOString(),
+    mapping: formatTechnicalMapping(readTraceability(changeDir).value),
+  }, null, 2)}\n`;
+}
 
 const WAVE_STRATEGIES = new Set(['parallel', 'serial']);
 const REVIEW_STATUSES = new Set(['pass', 'fail']);
@@ -23,6 +62,10 @@ const defaultGitRangeValidator = createGitRangeValidator();
 
 export function createPlan(changeDir, input) {
   const state = readState(changeDir);
+  // A brownfield change must never persist a plan without its technical
+  // evidence, whichever command created it. `technicalValidationEvidence`
+  // throws for an invalid brownfield change and returns undefined otherwise.
+  const technicalEvidence = input?.technicalValidation ?? technicalValidationEvidence(changeDir);
   const plan = {
     mode: input?.mode,
     source: input?.source,
@@ -38,6 +81,7 @@ export function createPlan(changeDir, input) {
   if (input?.recommendation !== undefined) plan.recommendation = input.recommendation;
   if (input?.recommendationReceipt !== undefined) plan.recommendation_receipt = input.recommendationReceipt;
   if (input?.selection !== undefined) plan.selection = input.selection;
+  if (technicalEvidence !== undefined) plan.technical_validation = technicalEvidence;
   const failures = validateStructure(plan);
   if (failures.length > 0) throw new Error(`Invalid execution plan: ${failures.join('; ')}`);
   plan.hash = hashPlan(plan);
@@ -85,6 +129,12 @@ export function writePlan(changeDir, plan) {
   mkdirSync(paths.root, { recursive: true });
   mkdirSync(paths.reviews, { recursive: true });
   atomicWrite(paths.executionPlan, `${JSON.stringify(plan, null, 2)}\n`);
+  const evidence = technicalValidationEvidenceFile(changeDir, plan);
+  if (evidence) {
+    const evidencePath = getPlanScopedPaths(changeDir, plan).technicalValidation;
+    mkdirSync(dirname(evidencePath), { recursive: true });
+    atomicWrite(evidencePath, evidence);
+  }
   writeExecutionPlanSummary(changeDir, plan);
   return readPlan(changeDir);
 }
@@ -140,6 +190,22 @@ export function validatePlan(changeDir, plan) {
     if (plan.selection.followed_recommendation !== followedRecommendation) failures.push('execution plan selection does not match recommended mode');
     if (plan.selection.acknowledged_non_recommendation !== !followedRecommendation) failures.push('execution plan selection acknowledgement does not match recommended mode');
   }
+  // The brownfield gate is driven by the change's Engineering Profile, not by
+  // the plan's schema: any plan shape that executes a brownfield change must
+  // carry matching technical evidence, so a legacy-shaped plan cannot drop it.
+  const technical = validateTechnicalChange(changeDir);
+  if (technical.profile === 'brownfield') {
+    if (!technical.valid) failures.push(`technical validation is invalid: ${technical.issues.map(entry => entry.message).join('; ')}`);
+    const evidence = plan?.technical_validation;
+    if (!evidence || evidence.profile !== 'brownfield' || evidence.status !== 'pass') {
+      failures.push('brownfield execution plan is missing technical validation evidence');
+    } else {
+      if (evidence.validator_version !== TECHNICAL_VALIDATOR_VERSION) failures.push('technical validation version does not match plan');
+      if (evidence.technical_contract_hash !== technical.technical_contract_hash) failures.push('technical contract hash mismatch');
+    }
+  } else if (plan?.schema_version === 2 && plan?.technical_validation !== undefined) {
+    failures.push('standard execution plan must not contain technical validation evidence');
+  }
   return { valid: failures.length === 0, failures, plan };
 }
 
@@ -158,6 +224,14 @@ export function recordReview(changeDir, waveId, receipt, options = {}) {
     throw new Error("Review receipt status must be 'pass' or 'fail'");
   }
   for (const field of ['base', 'head']) requireText(receipt?.[field], `receipt.${field}`);
+  // Profile-driven, so a plan that lost its recorded evidence cannot skip the
+  // brownfield conflict and coverage checks.
+  const brownfield = plan?.technical_validation?.profile === 'brownfield' || isBrownfieldChange(changeDir);
+  if (receipt.status === 'pass' && brownfield) {
+    const conflicts = listOpenTechnicalConflicts(changeDir, plan);
+    if (conflicts.length > 0) throw new Error(`Cannot record a passing review with unresolved technical conflicts: ${conflicts.map(conflict => conflict.task_id).join(', ')}`);
+    assertTechnicalDiffMapped(changeDir, plan, receipt.base, receipt.head);
+  }
   const paths = getOverlayPaths(changeDir);
   const planPaths = getPlanScopedPaths(changeDir, plan);
   mkdirSync(paths.reviews, { recursive: true });
@@ -427,6 +501,11 @@ export function resyncPlan(changeDir, { reason } = {}) {
     // （写前必读），后续任何失败都按 undoLog 逆序恢复为 resync 前内容，杜绝
     // "plan 已落新 hash 而 receipts/overlay 恢复旧值"的死锁复发状态。
     writeWithUndo(getOverlayPaths(changeDir).executionPlan, `${JSON.stringify(plan, null, 2)}\n`);
+    const resyncedEvidence = technicalValidationEvidenceFile(changeDir, plan);
+    if (resyncedEvidence) {
+      mkdirSync(dirname(migratedIdentity.technicalValidation), { recursive: true });
+      writeWithUndo(migratedIdentity.technicalValidation, resyncedEvidence);
+    }
     const summaryPath = join(changeDir, '.spec-superflow.yaml');
     const previousSummaryContent = existsSync(summaryPath) ? readFileSync(summaryPath, 'utf8') : null;
     writeExecutionPlanSummary(changeDir, plan);
@@ -1605,6 +1684,8 @@ export function writePlanRevision(changeDir, plan, previous) {
     write(join(nextPaths.planRoot, 'revision-history.json'), JSON.stringify(history, null, 2) + '\n');
     const paths = getOverlayPaths(changeDir);
     write(paths.executionPlan, JSON.stringify(plan, null, 2) + '\n');
+    const technicalEvidenceBody = technicalValidationEvidenceFile(changeDir, plan);
+    if (technicalEvidenceBody) write(nextPaths.technicalValidation, technicalEvidenceBody);
     const summary = join(changeDir, '.spec-superflow.yaml');
     undoLog.push({ path: summary, previousContent: readFileSync(summary, 'utf8') });
     writeExecutionPlanSummary(changeDir, plan);

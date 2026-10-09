@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { COMMANDS } from '../../scripts/spec-superflow.mjs';
 
 async function loadModule(relPath) {
   return import(pathToFileURL(join(process.cwd(), relPath)).href);
@@ -26,5 +27,17 @@ describe('runtime-rewrite', () => {
     assert.doesNotMatch(out, /npx --yes --package spec-superflow@\d+\.\d+\.\d+ ssf/);
     assert.doesNotMatch(out, /node scripts\/spec-superflow\.mjs/);
     assert.match(out, /node ['"].+spec-superflow\.mjs['"] state/);
+  });
+
+  it('covers every CLI subcommand so installers rewrite all of them', async () => {
+    const { SSF_SUBCOMMANDS, rewriteRuntime } = await loadModule('scripts/lib/runtime-rewrite.mjs');
+    // Setup commands are run by the user, never from a deployed skill body.
+    const deployed = Object.keys(COMMANDS).filter(command => !/^install-|^uninstall-/.test(command));
+    const missing = deployed.filter(command => !SSF_SUBCOMMANDS.includes(command));
+    assert.deepEqual(missing, [], `SSF_SUBCOMMANDS is missing: ${missing.join(', ')}`);
+    for (const command of SSF_SUBCOMMANDS) {
+      const out = rewriteRuntime(`Run \`SSF ${command} <dir>\`.`, '/root/plugin');
+      assert.doesNotMatch(out, new RegExp(`\\bSSF ${command}\\b`), `SSF ${command} was not rewritten`);
+    }
   });
 });

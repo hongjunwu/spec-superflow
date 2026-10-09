@@ -355,7 +355,7 @@ rm -rf your-project/.agents/skills
 
 ## WorkBuddy
 
-WorkBuddy 把 Skill 作为 marketplace 插件管理。安装器把 spec-superflow 部署为单个插件，包含 9 个 skill、运行时依赖（scripts/docs/templates/dist/hooks）、phase-guard 规则和 `.codebuddy-plugin/plugin.json` 清单，写入 `~/.workbuddy/plugins/marketplaces/<marketplace>/plugins/spec-superflow/`。
+WorkBuddy 把 Skill 作为 marketplace 插件管理。安装器把 spec-superflow 部署为单个插件，包含 12 个 skill、运行时依赖（scripts/docs/templates/dist/hooks）、phase-guard 规则和 `.codebuddy-plugin/plugin.json` 清单，写入 `~/.workbuddy/plugins/marketplaces/<marketplace>/plugins/spec-superflow/`。
 
 安装器还会分发三份 canonical Markdown command adapter：`/ssf:resume`、`/ssf:switch`、`/ssf:save`。它们仅在 CodeBuddy/WorkBuddy 的 command 机制中提供这些 slash 名称，并调用同一组 CLI guard；不表示所有平台都有完全相同的 slash 命令。
 
@@ -383,7 +383,7 @@ ssf install-workbuddy --dry-run
 ~/.workbuddy/plugins/marketplaces/cb_teams_marketplace/plugins/spec-superflow/
 ├── .codebuddy-plugin/plugin.json   ← 插件清单（name, version, skills[]）
 ├── commands/ssf/                   ← resume、switch、save Markdown command adapter
-├── skills/                         ← 9 个 skill（${CLAUDE_PLUGIN_ROOT} 已重写）
+├── skills/                         ← 12 个 skill（${CLAUDE_PLUGIN_ROOT} 已重写）
 ├── rules/phase-guard.md            ← phase-guard 规则（WorkBuddy 自动加载）
 ├── scripts/  docs/  templates/     ← 运行时依赖
 ├── dist/  hooks/
@@ -406,7 +406,7 @@ rm -rf ~/.workbuddy/plugins/marketplaces/cb_teams_marketplace/plugins/spec-super
 ### 验证
 
 ```bash
-ls ~/.workbuddy/plugins/marketplaces/cb_teams_marketplace/plugins/spec-superflow/skills   # 应有 9 个 skill 目录
+ls ~/.workbuddy/plugins/marketplaces/cb_teams_marketplace/plugins/spec-superflow/skills   # 应有 12 个 skill 目录
 cat ~/.workbuddy/plugins/marketplaces/cb_teams_marketplace/plugins/spec-superflow/rules/phase-guard.md
 cat ~/.workbuddy/plugins/marketplaces/cb_teams_marketplace/plugins/spec-superflow/.codebuddy-plugin/plugin.json
 ```
@@ -467,7 +467,7 @@ ssf install-codebuddy --config-dir /path/to/.codebuddy
 │   └── package.json
 ├── skills/                      ← 部署的 skill（路径已重写；其他 skill 保留）
 │   ├── workflow-start/
-│   └── ... (9 skills)
+│   └── ... (12 skills)
 ├── commands/ssf/                ← canonical recovery command adapters（共享目录，可含用户自建 command）
 │   ├── resume.md                ← 已重写：node <plugin>/scripts/spec-superflow.mjs（非 npx）
 │   ├── save.md                  ← allowed-tools: Bash(node:*)
@@ -489,7 +489,7 @@ npx spec-superflow@latest install-codebuddy
 
 ### 卸载
 
-推荐使用专用卸载命令——它会从 `settings.json` 精确移除 spec-superflow 的 `SessionStart` 条目（保留其他 hook 与所有设置字段），删除运行时目录（含 `bin/` 下的 ssf shim）、commands、phase-guard 规则与 9 个 skill 目录，并从用户 PATH 中移除 `~/.codebuddy/spec-superflow/bin` 条目（Windows 用户环境变量 / POSIX shell 配置文件；其他 PATH 条目保持不变）：
+推荐使用专用卸载命令——它会从 `settings.json` 精确移除 spec-superflow 的 `SessionStart` 条目（保留其他 hook 与所有设置字段），删除运行时目录（含 `bin/` 下的 ssf shim）、commands、phase-guard 规则与 12 个 skill 目录，并从用户 PATH 中移除 `~/.codebuddy/spec-superflow/bin` 条目（Windows 用户环境变量 / POSIX shell 配置文件；其他 PATH 条目保持不变）：
 
 ```bash
 ssf uninstall-codebuddy
@@ -592,7 +592,7 @@ rm -rf .qoder/skills .qoder/spec-superflow .qoder/rules/phase-guard.md
 ### 验证
 
 ```bash
-ls .qoder/skills          # 应有 9 个 skill 目录
+ls .qoder/skills          # 应有 12 个 skill 目录
 cat .qoder/rules/phase-guard.md
 ```
 
@@ -658,7 +658,7 @@ rm -rf .cline/skills .cline/spec-superflow .clinerules/phase-guard.md
 ### 验证
 
 ```bash
-ls .cline/skills          # 应有 9 个 skill 目录
+ls .cline/skills          # 应有 12 个 skill 目录
 cat .clinerules/phase-guard.md
 ```
 
@@ -813,7 +813,7 @@ npx spec-superflow@latest install-pi
 ```bash
 npx spec-superflow@latest install-pi
 rm -rf .pi/skills .pi/spec-superflow
-ls .pi/skills   # 应有 9 个 skill 目录
+ls .pi/skills   # 应有 12 个 skill 目录
 ```
 
 > Pi 无 phase-guard 规则自动注入，会话中请显式 `用 workflow-start 开始`。

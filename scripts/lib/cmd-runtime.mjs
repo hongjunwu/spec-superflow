@@ -21,6 +21,8 @@ const ASSETS = new Set([
   'templates/proposal.md',
   'templates/spec.md',
   'templates/tasks.md',
+  'templates/technical-design.md',
+  'templates/traceability.json',
 ]);
 
 export async function run(args) {

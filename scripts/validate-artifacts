@@ -2,14 +2,18 @@
 // validate-artifacts - Validate spec-superflow artifacts
 // Usage: node scripts/validate-artifacts [change-dir]
 //
-// Reads a change directory and validates all artifacts found:
+// Reads one change directory (default: every bundled example) and validates all
+// artifacts found:
 //   - proposal.md (change content validation)
 //   - specs/*/spec.md (delta spec validation)
+//   - technical-design.md + traceability.json (when the Engineering Profile
+//     declares brownfield, or a standard change carries the optional design)
 
-import { readFileSync, existsSync, statSync } from 'fs';
+import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, basename } from 'path';
 import { Validator } from '../dist/index.js';
 import { validateSpecPathLayout, relativeSpecPath } from './lib/spec-paths.mjs';
+import { formatTechnicalMapping, validateTechnicalChange } from './lib/technical-validation.mjs';
 
 function printReport(label, report) {
   console.log(`\n  📋 ${label}`);
@@ -25,16 +29,8 @@ function printReport(label, report) {
   }
 }
 
-function main() {
-  const args = process.argv.slice(2);
-  const changeDir = args[0] ?? 'docs/examples/add-dark-mode';
-  if (!existsSync(changeDir) || !statSync(changeDir).isDirectory()) {
-    console.error(`Error: "${changeDir}" is not a valid directory`);
-    process.exit(2);
-  }
-
+function validateChangeDir(changeDir, validator) {
   const changeName = basename(changeDir);
-  const validator = new Validator(false);
 
   console.log(`🔍 Validating artifacts in: ${changeDir}`);
   console.log(`   Change: ${changeName}`);
@@ -78,8 +74,46 @@ function main() {
     }
   }
 
+  const technicalReport = validateTechnicalChange(changeDir);
+  if (technicalReport.applies || technicalReport.issues.length > 0) {
+    printReport('technical validation', technicalReport);
+    if (!technicalReport.valid) hasErrors = true;
+    if (technicalReport.valid && technicalReport.applies) {
+      for (const line of formatTechnicalMapping(technicalReport.traceability)) console.log(`     ↳ ${line}`);
+    }
+  }
+
+  return hasErrors;
+}
+
+// Every bundled example is validated by default so the technical gate covers
+// the brownfield example as well as the standard ones.
+function defaultChangeDirs() {
+  const examplesRoot = 'docs/examples';
+  return readdirSync(examplesRoot)
+    .sort()
+    .map(name => join(examplesRoot, name))
+    .filter(dir => existsSync(join(dir, 'proposal.md')));
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  const changeDirs = args[0] ? [args[0]] : defaultChangeDirs();
+  for (const changeDir of changeDirs) {
+    if (!existsSync(changeDir) || !statSync(changeDir).isDirectory()) {
+      console.error(`Error: "${changeDir}" is not a valid directory`);
+      process.exit(2);
+    }
+  }
+
+  const validator = new Validator(false);
+  let failed = false;
+  for (const changeDir of changeDirs) {
+    if (validateChangeDir(changeDir, validator)) failed = true;
+  }
+
   console.log('');
-  if (hasErrors) {
+  if (failed) {
     console.log('❌ Validation failed with errors.');
     process.exit(1);
   } else {

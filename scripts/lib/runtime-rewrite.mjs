@@ -28,10 +28,20 @@ export const SSF_SUBCOMMANDS = [
   'state',
   'switch',
   'sync',
+  'technical',
   'validate',
   'version',
   'workflow',
 ];
+
+/**
+ * Regex alternation of the deployable `ssf` subcommands, for callers that scan
+ * skill bodies for portable runtime invocations. Derived from SSF_SUBCOMMANDS so
+ * a new subcommand cannot be rewritten in one place and missed in another.
+ */
+export function ssfSubcommandAlternation() {
+  return SSF_SUBCOMMANDS.join('|');
+}
 
 /**
  * Matches any portable runtime invocation in a skill/command body:

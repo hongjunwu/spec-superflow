@@ -3,10 +3,12 @@ import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadConfig } from './config-loader.mjs';
 import { PLATFORM_RUNTIME_INVENTORY } from './platform-runtime-inventory.mjs';
+import { ssfSubcommandAlternation } from './runtime-rewrite.mjs';
 
 const RUNTIME_SKILLS = new Set([
   'workflow-start', 'need-explorer', 'spec-writer', 'contract-builder',
   'build-executor', 'code-reviewer', 'bug-investigator', 'release-archivist', 'spec-merger',
+  'technical-designer', 'impact-analyzer', 'contract-validator',
 ]);
 
 function readJsonIfExists(filePath) {
@@ -127,7 +129,7 @@ function checkRuntimeDistribution(root) {
       issues.push(`${name}: plugin-root placeholder remains`);
       continue;
     }
-    if (new RegExp(`\\b${sourceRuntimeCommand}\\s+(?:audit|checkpoint|config|debug|doctor|execution|finish|handoff|inject|isolate|list|resume|runtime|save|state|switch|sync|validate|version|workflow)\\b`).test(content)) continue;
+    if (new RegExp(`\\b${sourceRuntimeCommand}\\s+(?:${ssfSubcommandAlternation()})\\b`).test(content)) continue;
     const localPaths = localRuntimePaths(content);
     if (localPaths.length > 0) {
       if (localPaths.every(existsSync)) continue;

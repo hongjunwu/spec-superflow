@@ -10,6 +10,12 @@
 
 - [ ] **1.1 <动词开头的交付>**：修改 `path/to/file`，说明完成后什么行为不同；证明：`exact command`。
 
+Brownfield 任务在下一行加入追溯引用：
+
+```text
+  Refs: REQ-001, API-001, FILE-001, TEST-001
+```
+
 ## 实施备注（仅在必要时）
 
 - 记录跨批次接口、迁移风险或不可从任务名称推断的约束。测试的 RED/GREEN 证据、review

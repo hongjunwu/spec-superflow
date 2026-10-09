@@ -20,6 +20,9 @@ const TARGETS = [
   { path: 'skills/code-reviewer/SKILL.md', label: 'skill: code-reviewer' },
   { path: 'skills/release-archivist/SKILL.md', label: 'skill: release-archivist' },
   { path: 'skills/spec-merger/SKILL.md', label: 'skill: spec-merger' },
+  { path: 'skills/technical-designer/SKILL.md', label: 'skill: technical-designer' },
+  { path: 'skills/impact-analyzer/SKILL.md', label: 'skill: impact-analyzer' },
+  { path: 'skills/contract-validator/SKILL.md', label: 'skill: contract-validator' },
 ];
 
 /**

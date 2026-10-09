@@ -5,9 +5,10 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { findCanonicalSpecFiles } from './spec-paths.mjs';
+import { readEngineeringProfile } from './technical-validation.mjs';
 
-// Compute a joint SHA256 hash of all 4 planning artifacts.
-// Input: proposal.md + specs/*/spec.md (sorted) + design.md + tasks.md
+// Compute a joint SHA256 hash of planning artifacts. Brownfield plans also
+// bind their approved technical design and machine-readable traceability map.
 export function computeArtifactsHash(changeDir) {
   const hash = crypto.createHash('sha256');
   let hasContent = false;
@@ -37,6 +38,16 @@ export function computeArtifactsHash(changeDir) {
   if (fs.existsSync(tasks)) {
     hash.update(normalizeTaskCheckboxes(fs.readFileSync(tasks, 'utf-8')));
     hasContent = true;
+  }
+
+  if (readEngineeringProfile(changeDir).profile === 'brownfield') {
+    for (const name of ['technical-design.md', 'traceability.json']) {
+      const filePath = path.join(changeDir, name);
+      if (fs.existsSync(filePath)) {
+        hash.update(fs.readFileSync(filePath, 'utf-8'));
+        hasContent = true;
+      }
+    }
   }
 
   return hasContent ? `sha256:${hash.digest('hex')}` : null;
