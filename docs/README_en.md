@@ -12,6 +12,8 @@
   <a href="#quick-start">Quick start</a> · <a href="#two-execution-paths">Execution paths</a> · <a href="#installation">Installation</a> · <a href="#commands">Commands</a> · <a href="../README.md">中文</a>
 </p>
 
+> This repository is a fork of [MageByte-Zero/spec-superflow](https://github.com/MageByte-Zero/spec-superflow) under the MIT license: the original copyright belongs to MageByte, and the modifications in this fork belong to hongjunwu.
+
 ---
 
 spec-superflow combines OpenSpec-style planning with Superpowers-style verification discipline in one self-contained plugin. v2 gives new work two entry points: execute a clear, bounded change directly, or approve one short plan before implementation.
@@ -232,4 +234,4 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) and [CHANGELOG.md](../CHANGELOG.md).
 
 ## License
 
-[MIT](../LICENSE)
+[MIT](../LICENSE) — original copyright MageByte; the modifications in this fork belong to hongjunwu.

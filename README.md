@@ -12,6 +12,8 @@
   <a href="#快速开始">快速开始</a> · <a href="#两个执行路径">执行路径</a> · <a href="#9-个-skills">Skills</a> · <a href="#安装">安装</a> · <a href="#命令">命令</a> · <a href="#关注码哥跳动">公众号</a> · <a href="docs/README_en.md">English</a>
 </p>
 
+> 本仓库是 [MageByte-Zero/spec-superflow](https://github.com/MageByte-Zero/spec-superflow) 的 fork，遵循 MIT 许可：原始版权归 MageByte 所有，本 fork 的修改部分版权归 hongjunwu。
+
 ---
 
 spec-superflow 把 OpenSpec 的结构化规划与 Superpowers 的验证纪律组合成一个自包含插件。v2 将新任务收敛为两个入口：明确的小改动直接执行，需要共同确认范围的改动先形成一份短计划再执行。
@@ -274,4 +276,4 @@ npm run check-versions
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) — 原始版权归 MageByte 所有；本 fork 的修改部分版权归 hongjunwu。
