@@ -11,6 +11,14 @@ CLAUDE.md
 # Client-local generated deploy directories
 .cursor/
 
+# Local AI-tool installs (OpenSpec / opsx written on this machine).
+# Un-ignore a path here when the project deliberately adopts that setup.
+.agents/skills/
+.claude/commands/opsx/
+.claude/skills/openspec-*/
+.codebuddy/
+openspec/
+
 *.log
 *.tmp
 *.swp
