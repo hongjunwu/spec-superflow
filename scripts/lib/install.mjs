@@ -27,7 +27,7 @@ import { createPhaseGuardContent } from './phase-guard-content.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultPluginRoot = resolve(__dirname, '..', '..'); // repo root when run from clone
 
-const GITHUB_REPO = 'MageByte-Zero/spec-superflow';
+const GITHUB_REPO = 'hongjunwu/spec-superflow';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 
 // Directories needed by local installer-rewritten runtime commands.

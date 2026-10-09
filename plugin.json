@@ -6,8 +6,8 @@
     "name": "MageByte",
     "url": "https://github.com/MageByte-Zero"
   },
-  "homepage": "https://github.com/MageByte-Zero/spec-superflow",
-  "repository": "https://github.com/MageByte-Zero/spec-superflow",
+  "homepage": "https://github.com/hongjunwu/spec-superflow",
+  "repository": "https://github.com/hongjunwu/spec-superflow",
   "license": "MIT",
   "keywords": [
     "workflow",

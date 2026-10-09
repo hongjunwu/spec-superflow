@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="../LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
-  <a href="https://github.com/MageByte-Zero/spec-superflow/stargazers"><img src="https://img.shields.io/github/stars/MageByte-Zero/spec-superflow" alt="GitHub Stars"></a>
+  <a href="https://github.com/hongjunwu/spec-superflow/stargazers"><img src="https://img.shields.io/github/stars/hongjunwu/spec-superflow" alt="GitHub Stars"></a>
   <a href="https://www.npmjs.com/package/spec-superflow"><img src="https://img.shields.io/npm/v/spec-superflow" alt="npm version"></a>
 </p>
 
@@ -145,17 +145,26 @@ The repository, branch, and path are recorded and checked during recovery. `ssf 
 
 ## Installation
 
+> **This fork does not publish to npm.** The `npx spec-superflow@latest install-*` commands fetch the upstream 2.0.1 package; for this repository clone it and use the local installers:
+>
+> ```bash
+> git clone https://github.com/hongjunwu/spec-superflow && cd spec-superflow
+> node scripts/install-cursor.mjs --local .
+> ```
+>
+> The platform marketplaces (Claude Code / Codex / Copilot / Gemini) point at this repository and never touch npm.
+
 ### Claude Code
 
 ```bash
-/plugin marketplace add MageByte-Zero/spec-superflow
+/plugin marketplace add hongjunwu/spec-superflow
 /plugin install spec-superflow@spec-superflow
 ```
 
 ### OpenAI Codex CLI / App
 
 ```bash
-codex plugin marketplace add MageByte-Zero/spec-superflow --ref v2.2.0
+codex plugin marketplace add hongjunwu/spec-superflow --ref v2.2.0
 codex plugin add spec-superflow@spec-superflow
 ```
 
@@ -170,14 +179,14 @@ npx spec-superflow@latest install-cursor
 ### GitHub Copilot CLI
 
 ```bash
-copilot plugin marketplace add MageByte-Zero/spec-superflow
+copilot plugin marketplace add hongjunwu/spec-superflow
 copilot plugin install spec-superflow@spec-superflow
 ```
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/MageByte-Zero/spec-superflow
+gemini extensions install https://github.com/hongjunwu/spec-superflow
 ```
 
 The project supports 19 AI coding platforms. See [INSTALL.md](../INSTALL.md) for every installer and uninstall path, and the [platform matrix](platform-matrix.md) for capability differences.

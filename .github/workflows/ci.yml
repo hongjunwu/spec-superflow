@@ -150,9 +150,18 @@ jobs:
       - name: Verify marketplace release gate
         env:
           EXPECTED_VERSION: ${{ github.ref_name }}
+          MARKETPLACE_MANIFEST_URL: ${{ vars.MARKETPLACE_MANIFEST_URL }}
         run: |
+          # Defaults to the upstream catalog entry. A fork/re-distribution sets
+          # the repository variable to its own manifest URL, or to `skip` to
+          # release without an external marketplace listing.
+          manifest_url="${MARKETPLACE_MANIFEST_URL:-https://raw.githubusercontent.com/hashgraph-online/awesome-codex-plugins/main/plugins/MageByte-Zero/spec-superflow/.codex-plugin/plugin.json}"
+          if [ "$manifest_url" = "skip" ]; then
+            echo "MARKETPLACE_MANIFEST_URL=skip: releasing without the external marketplace gate."
+            exit 0
+          fi
           node scripts/verify-marketplace-release.mjs \
-            --manifest-url https://raw.githubusercontent.com/hashgraph-online/awesome-codex-plugins/main/plugins/MageByte-Zero/spec-superflow/.codex-plugin/plugin.json \
+            --manifest-url "$manifest_url" \
             --expected-version "${EXPECTED_VERSION#v}"
       - name: Token efficiency lint (warning only)
         run: node scripts/lint/lint-skills.mjs --include token
@@ -162,6 +171,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "$GITHUB_REF_NAME" --generate-notes
       - name: Publish to npm
-        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # A repository without the package's npm credentials still gets its
+          # GitHub Release; publish only when a token is configured.
+          if [ -z "${NODE_AUTH_TOKEN}" ]; then
+            echo "NPM_TOKEN is not configured for this repository; skipping npm publish."
+            exit 0
+          fi
+          npm publish --provenance --access public

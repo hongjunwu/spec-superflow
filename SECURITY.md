@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in spec-superflow, please report it via GitHub's [private vulnerability reporting](https://github.com/MageByte-Zero/spec-superflow/security/advisories/new) or email **magebyte@163.com**.
+If you discover a security vulnerability in spec-superflow, please report it via GitHub's [private vulnerability reporting](https://github.com/hongjunwu/spec-superflow/security/advisories/new) or email **magebyte@163.com**.
 
 **Do not open a public issue** for security vulnerabilities.
 

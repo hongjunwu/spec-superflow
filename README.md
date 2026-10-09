@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
-  <a href="https://github.com/MageByte-Zero/spec-superflow/stargazers"><img src="https://img.shields.io/github/stars/MageByte-Zero/spec-superflow" alt="GitHub Stars"></a>
+  <a href="https://github.com/hongjunwu/spec-superflow/stargazers"><img src="https://img.shields.io/github/stars/hongjunwu/spec-superflow" alt="GitHub Stars"></a>
   <a href="https://www.npmjs.com/package/spec-superflow"><img src="https://img.shields.io/npm/v/spec-superflow" alt="npm version"></a>
 </p>
 
@@ -179,17 +179,26 @@ ssf isolate changes/example --worktree
 
 ## 安装
 
+> **本 fork 未发布到 npm。** 各平台的 `npx spec-superflow@latest install-*` 会从 npm 拉到上游 2.0.1；本仓库请克隆后使用本地安装器，例如：
+>
+> ```bash
+> git clone https://github.com/hongjunwu/spec-superflow && cd spec-superflow
+> node scripts/install-cursor.mjs --local .
+> ```
+>
+> 平台 marketplace（Claude Code / Codex / Copilot / Gemini）直接指向本仓库，不经过 npm。
+
 ### Claude Code
 
 ```bash
-/plugin marketplace add MageByte-Zero/spec-superflow
+/plugin marketplace add hongjunwu/spec-superflow
 /plugin install spec-superflow@spec-superflow
 ```
 
 ### OpenAI Codex CLI / App
 
 ```bash
-codex plugin marketplace add MageByte-Zero/spec-superflow --ref v2.2.0
+codex plugin marketplace add hongjunwu/spec-superflow --ref v2.2.0
 codex plugin add spec-superflow@spec-superflow
 ```
 
@@ -204,14 +213,14 @@ npx spec-superflow@latest install-cursor
 ### GitHub Copilot CLI
 
 ```bash
-copilot plugin marketplace add MageByte-Zero/spec-superflow
+copilot plugin marketplace add hongjunwu/spec-superflow
 copilot plugin install spec-superflow@spec-superflow
 ```
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/MageByte-Zero/spec-superflow
+gemini extensions install https://github.com/hongjunwu/spec-superflow
 ```
 
 项目支持 19 个 AI 编程平台。其他平台的安装器、目录和卸载方式见 [INSTALL.md](INSTALL.md)，能力差异见 [平台矩阵](docs/platform-matrix.md)。

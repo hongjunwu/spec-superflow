@@ -3,3 +3,12 @@
 /docs/superpowers/
 /contest-2026/
 /scripts/sdd-workspace/
+
+# Local AI-tool installs (OpenSpec / opsx written on this machine). npm honours
+# .npmignore instead of .gitignore, so these exclusions must be repeated here or
+# `npm pack` ships junk that the repository never tracks.
+/openspec/
+/.agents/skills/
+/.claude/commands/opsx/
+/.claude/skills/openspec-*/
+/.codebuddy/

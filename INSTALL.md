@@ -28,6 +28,17 @@
 
 ## 平台总览
 
+> **安装来源说明（本 fork）**：本仓库 `hongjunwu/spec-superflow` 的 v2.2.0 **没有发布到 npm**。下文出现的 `npx spec-superflow@latest install-*` 会从 npm 安装上游 2.0.1；使用本仓库时请克隆后走本地安装器，例如：
+>
+> ```bash
+> git clone https://github.com/hongjunwu/spec-superflow && cd spec-superflow
+> node scripts/install-cursor.mjs --local .          # 或 install-cline / install-kiro / … / install-zcode
+> node scripts/spec-superflow.mjs install-workbuddy --local .
+> node scripts/spec-superflow.mjs install-codebuddy --local .
+> ```
+>
+> 各平台 marketplace（Claude Code / Codex / Copilot / Gemini）的 `add` 命令已经指向本仓库；只有 `npx`/`npm install -g` 这两类命令会落到上游包。
+
 | 平台 | 安装 | 升级 | 卸载 |
 |------|------|------|------|
 | Claude Code | marketplace | `/plugin update` | `/plugin uninstall` |
@@ -57,7 +68,7 @@
 ### 安装（推荐：Marketplace）
 
 ```bash
-/plugin marketplace add MageByte-Zero/spec-superflow
+/plugin marketplace add hongjunwu/spec-superflow
 /plugin install spec-superflow@spec-superflow
 ```
 
@@ -80,7 +91,7 @@
 ### 本地安装（开发 / 离线）
 
 ```bash
-git clone https://github.com/MageByte-Zero/spec-superflow.git
+git clone https://github.com/hongjunwu/spec-superflow.git
 
 # 在 Claude Code 中执行：
 /plugin install file:/absolute/path/to/spec-superflow
@@ -95,7 +106,7 @@ Cursor 原生发现 `.cursor/skills/`、`.agents/skills/`、`~/.cursor/skills/`�
 ### 安装（推荐：一键脚本）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/MageByte-Zero/spec-superflow/main/scripts/install-cursor.mjs | node -
+curl -fsSL https://raw.githubusercontent.com/hongjunwu/spec-superflow/main/scripts/install-cursor.mjs | node -
 ```
 
 脚本会自动从 GitHub latest release 拉取最新版。
@@ -105,7 +116,7 @@ curl -fsSL https://raw.githubusercontent.com/MageByte-Zero/spec-superflow/main/s
 重新运行安装命令即可（自动覆盖旧文件）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/MageByte-Zero/spec-superflow/main/scripts/install-cursor.mjs | node -
+curl -fsSL https://raw.githubusercontent.com/hongjunwu/spec-superflow/main/scripts/install-cursor.mjs | node -
 ```
 
 ### 卸载
@@ -120,7 +131,7 @@ rm -f .cursor/rules/phase-guard.mdc
 ### 从本地仓库部署（开发 / 测试）
 
 ```bash
-git clone https://github.com/MageByte-Zero/spec-superflow.git
+git clone https://github.com/hongjunwu/spec-superflow.git
 cd your-project
 node /absolute/path/to/spec-superflow/scripts/install-cursor.mjs --local /absolute/path/to/spec-superflow
 ```
@@ -128,7 +139,7 @@ node /absolute/path/to/spec-superflow/scripts/install-cursor.mjs --local /absolu
 ### 手动部署
 
 ```bash
-git clone https://github.com/MageByte-Zero/spec-superflow.git
+git clone https://github.com/hongjunwu/spec-superflow.git
 mkdir -p .cursor/skills
 cp -R /absolute/path/to/spec-superflow/skills/* .cursor/skills/
 mkdir -p .cursor/rules
@@ -186,7 +197,7 @@ codex plugin add spec-superflow@awesome-codex-plugins
 当社区 marketplace 镜像尚未同步时，可直接指定本仓库的 release tag：
 
 ```bash
-codex plugin marketplace add MageByte-Zero/spec-superflow --ref v2.2.0
+codex plugin marketplace add hongjunwu/spec-superflow --ref v2.2.0
 codex plugin add spec-superflow@spec-superflow
 ```
 
@@ -260,7 +271,7 @@ Copilot CLI 的主流方式是 marketplace。仓库已提供根目录 `plugin.js
 ### 安装
 
 ```bash
-copilot plugin marketplace add MageByte-Zero/spec-superflow
+copilot plugin marketplace add hongjunwu/spec-superflow
 copilot plugin install spec-superflow@spec-superflow
 ```
 
@@ -285,7 +296,7 @@ copilot plugin uninstall spec-superflow
 ### 安装
 
 ```bash
-gemini extensions install https://github.com/MageByte-Zero/spec-superflow
+gemini extensions install https://github.com/hongjunwu/spec-superflow
 ```
 
 ### 升级
@@ -309,7 +320,7 @@ OpenCode 支持本地 plugin 文件和 Agent Skills 目录。仓库已提供 `.o
 ### 安装（推荐：Plugin Mode）
 
 ```bash
-git clone https://github.com/MageByte-Zero/spec-superflow.git
+git clone https://github.com/hongjunwu/spec-superflow.git
 ```
 
 在 OpenCode 的插件配置或 UI 中指向仓库内的插件文件：
@@ -323,7 +334,7 @@ git clone https://github.com/MageByte-Zero/spec-superflow.git
 ### 安装（Skills Symlink）
 
 ```bash
-git clone https://github.com/MageByte-Zero/spec-superflow.git
+git clone https://github.com/hongjunwu/spec-superflow.git
 mkdir -p your-project/.agents
 ln -s /absolute/path/to/spec-superflow/skills your-project/.agents/skills
 ```
@@ -533,7 +544,7 @@ Trae IDE / TRAE Work 原生支持 `SKILL.md`。项目技能目录是 `.trae/skil
 ### 安装（本地目录）
 
 ```bash
-git clone https://github.com/MageByte-Zero/spec-superflow.git
+git clone https://github.com/hongjunwu/spec-superflow.git
 mkdir -p .trae/skills
 cp -R spec-superflow/skills/* .trae/skills/
 ```
@@ -605,7 +616,7 @@ cat .qoder/rules/phase-guard.md
 ### 安装
 
 ```bash
-git clone https://github.com/MageByte-Zero/spec-superflow.git
+git clone https://github.com/hongjunwu/spec-superflow.git
 ```
 
 然后配置客户端从以下路径加载技能：

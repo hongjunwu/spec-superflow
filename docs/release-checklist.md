@@ -139,6 +139,24 @@ For each example in `docs/examples/`:
 
 - If the remote marketplace version lags, submit and track the 同步 PR; wait for maintainers to merge and the generator to finish, then rerun the delivery verification and clean-Codex installation check.
 
+### Fork / re-distribution
+
+The release workflow defaults to the upstream catalog entry and to upstream npm credentials. A fork or an internal re-distribution changes only two settings, and neither requires a workflow edit:
+
+- **Marketplace gate** — set the repository variable `MARKETPLACE_MANIFEST_URL` to your own manifest URL, or to the literal `skip` to release without an external marketplace listing. Unset keeps the upstream catalog entry as the blocking gate.
+- **npm publishing** — the `Publish to npm` step skips itself when `NPM_TOKEN` is not configured, so a fork still produces its GitHub Release. Set the secret only if the repository owns the npm package.
+
+Without npm, distribute through git and GitHub Releases instead:
+
+```bash
+npm pack                                     # spec-superflow-<version>.tgz, zero runtime dependencies
+gh release create v<version> --generate-notes spec-superflow-<version>.tgz
+```
+
+Installing from a release works through the platform marketplaces (`/plugin marketplace add <owner>/spec-superflow`, `codex plugin marketplace add <owner>/spec-superflow --ref v<version>`, `copilot plugin marketplace add <owner>/spec-superflow`, `gemini extensions install https://github.com/<owner>/spec-superflow`) or through the local installers after a clone or unzip (`node scripts/install-cursor.mjs --local .`, `ssf install-workbuddy --local .`, `ssf install-codebuddy --local .`). The `npx spec-superflow@latest …` commands always fetch the upstream npm package and are not part of a fork's distribution.
+
+The Plugin Scanner evidence, the upstream catalog PR, and `gh repo sync MageByte-Zero/awesome-codex-plugins` above apply only when publishing into the upstream marketplace.
+
 ## Publishing Checks
 
 - Release preparation does not authorize `git tag`, `npm publish`, GitHub Release creation, marketplace publication, issue closure, or external issue comments. Perform those only after the maintainer explicitly authorizes publication.

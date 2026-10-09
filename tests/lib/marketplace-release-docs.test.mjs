@@ -20,7 +20,7 @@ describe('marketplace release documentation', () => {
 
   it('uses the current release tag for direct Codex marketplace installation', () => {
     for (const text of [read('README.md'), read('INSTALL.md')]) {
-      assert.match(text, new RegExp(`codex plugin marketplace add MageByte-Zero/spec-superflow --ref v${currentVersion.replaceAll('.', '\\.')}`));
+      assert.match(text, new RegExp(`codex plugin marketplace add hongjunwu/spec-superflow --ref v${currentVersion.replaceAll('.', '\\.')}`));
     }
   });
 
