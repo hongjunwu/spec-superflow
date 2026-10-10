@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { getPlanScopedPaths } from './sdd-overlay.mjs';
 import { readTraceability, validateTechnicalChange } from './technical-validation.mjs';
@@ -68,7 +68,11 @@ export function assertTechnicalDiffMapped(changeDir, plan, base, head) {
   const traceability = readTraceability(changeDir).value;
   const patterns = traceability.files.map(file => file.path.replace(/\\/g, '/'));
   const repoRoot = execFileSync('git', ['-C', changeDir, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
-  const changeRelative = path.relative(repoRoot, changeDir).split(path.sep).join('/');
+  // realpath both sides before comparing: git resolves 8.3 short-name temp
+  // dirs (CI Windows runners use C:\Users\RUNNER~1\...) while fs.tmpdir()
+  // does not, and a mixed-form pair makes path.relative walk outside the
+  // repo, silently disabling the change-dir exclusion below.
+  const changeRelative = path.relative(realpathSync.native(repoRoot), realpathSync.native(changeDir)).split(path.sep).join('/');
   const diff = execFileSync('git', ['-C', changeDir, 'diff', '--name-only', base, head], { encoding: 'utf8' })
     .split(/\r?\n/).map(value => value.trim()).filter(Boolean);
   const unmapped = diff.filter(file => {
