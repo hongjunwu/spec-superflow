@@ -6,6 +6,28 @@ The format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-10-10
+
+### Breaking
+
+- **OpenSpec directory layout**: active changes and the published baseline now live under one `openspec/` parent — `openspec/changes/<change>/` for change artifacts and `openspec/specs/<capability>/spec.md` for the published baseline (`ssf sync` target). Existing projects migrate with `mkdir -p openspec && git mv changes openspec/changes && git mv specs openspec/specs`. `scripts/lib/layout.mjs` is the single source of truth for the layout; publication, validation, sync, list and recovery resolve paths through it.
+
+### Added
+
+- **`ssf workflow complete <dir> --dry-run`**: a non-destructive closing preflight that lists every closure blocker with its fix command — plan validity, technical conflicts, wave reviews (naming a stale final-review head instead of reporting a missing review, via `readReviewReceiptForDiagnostics`), working-tree state, and every guard dimension.
+- **`docs/artifact-format.md`**: the authoritative machine-readable artifact format contract (Engineering Profile section shape, `REQ-*/API-*/…/FILE-*/TEST-*` id prefixes, per-kind design fields, the tasks.md `Refs:` verbatim-sync rule and proof-command format), linked from the spec-writer validation checklist.
+- `workflow_dispatch` manual runs on the CI/CD workflow.
+
+### Changed
+
+- Engineering Profile diagnostics name the root cause: a proposal that mentions `brownfield` without a parseable `## Engineering Profile` section reports the unrecognized section instead of silently degrading to standard, and the traceability `profile must be 'standard'` error hints at the unparseable proposal section when the two disagree.
+- The release-archivist skill documents the one valid closing order (check tasks → `ssf sync` → commit everything → record the final review → immediately `workflow complete` with zero commits in between) and directs failures to the dry-run preflight.
+
+### Fixed
+
+- Brownfield review file-coverage no longer leaks change-internal state files on CI Windows runners: `git rev-parse --show-toplevel` returns the long path while the runner TEMP is an 8.3 short path (`C:\Users\RUNNER~1\...`), so `path.relative` walked outside the repo and silently disabled the change-dir exclusion. Both sides are now normalized with `realpathSync.native` (the same guard `cmd-finish.mjs` already applies).
+- `MODIFIED` delta operations that miss the published baseline now teach the delta-baseline semantics in the error ("if this behavior was never spec'd, use ADDED Requirements") instead of only reporting the failure.
+
 ## [2.2.0] - 2026-10-09
 
 ### Added
