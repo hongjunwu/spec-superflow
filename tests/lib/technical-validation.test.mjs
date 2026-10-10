@@ -72,6 +72,26 @@ describe('technical validation', () => {
     assert.ok(report.issues.some(entry => entry.message === 'standard Engineering Profile must not declare Brownfield boundaries'));
   });
 
+  it('diagnoses an Engineering Profile section that fails to parse as the root cause', () => {
+    const dir = writeBrownfieldChange();
+    // Downgrading the heading one level hides the section from the parser;
+    // the validator must name that root cause instead of silently degrading.
+    writeUnparseableProfile(dir);
+    const report = validateTechnicalChange(dir);
+    assert.equal(report.valid, false);
+    assert.ok(report.issues.some(entry => entry.path === 'proposal.md' && /no parseable section was found/.test(entry.message)), JSON.stringify(report.issues));
+  });
+
+  it('points at the profile binding when a brownfield trace meets a standard-parsed proposal', () => {
+    const dir = writeStandardChange();
+    writeStandardArtifacts(dir);
+    editTraceability(dir, trace => { trace.profile = 'brownfield'; });
+    const report = validateTechnicalChange(dir);
+    assert.equal(report.valid, false);
+    assert.ok(report.issues.some(entry => entry.message.startsWith("profile must be 'standard'")
+      && entry.message.includes("check that proposal.md has a level-two heading")), JSON.stringify(report.issues));
+  });
+
   it('rejects a mapped requirement that does not exist in the specs', () => {
     const dir = writeBrownfieldChange();
     editTraceability(dir, trace => {
@@ -293,6 +313,13 @@ function writeStandardChange() {
 function writeStandardArtifacts(dir) {
   writeFileSync(join(dir, 'technical-design.md'), readTechnicalDesign());
   writeFileSync(join(dir, 'traceability.json'), JSON.stringify(readTraceability('standard'), null, 2));
+}
+
+// The author intended brownfield but the section heading is not machine-readable.
+function writeUnparseableProfile(dir) {
+  writeFileSync(join(dir, 'proposal.md'), [
+    '# Proposal', '', '### Engineering Profile', '', '- **Profile**: brownfield', '- **Boundaries**: api', '',
+  ].join('\n'));
 }
 
 // The map is identical for both profiles; only its declared profile differs.

@@ -145,6 +145,17 @@ describe('spec-publication: detailed, idempotent publication candidates', () => 
     }
   });
 
+  it('points never-spec’d behavior at ADDED when MODIFIED misses the published baseline', () => {
+    const existing = baseline('workflow', [requirement('Published rule', 'stay as published')]);
+    const delta = `## MODIFIED Requirements\n\n${requirement('Unpublished rule', 'was never spec’d before')}`;
+
+    assert.throws(
+      () => detailed(existing, delta, 'workflow'),
+      /use ADDED Requirements instead/,
+      'a MODIFIED miss must teach the delta-baseline semantics, not just report the failure',
+    );
+  });
+
   it('refuses an invalid delta instead of returning a candidate that could be published', () => {
     const invalidDelta = '## ADDED Requirements\n\n### Notes: this is not a requirement\n\nNo requirement is declared here.';
 

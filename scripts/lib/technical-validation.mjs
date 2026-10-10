@@ -59,7 +59,15 @@ export function parseEngineeringProfile(content) {
   const normalized = String(content).replace(/\r\n?/g, '\n');
   const match = normalized.match(/^##\s+Engineering Profile\s*$/im);
   if (!match || match.index === undefined) {
-    return { profile: 'standard', boundaries: [], sectionPresent: false, errors: [] };
+    const errors = [];
+    // The author clearly intended to declare a profile but the section is not
+    // machine-readable. Without this diagnostic the change silently falls back
+    // to standard and the failure surfaces later as a misleading
+    // "profile must be 'standard'" error from traceability validation.
+    if (/engineering profile/i.test(normalized) && /brownfield/i.test(normalized)) {
+      errors.push('proposal.md mentions "Engineering Profile" and "brownfield" but no parseable section was found; expected a level-two heading "## Engineering Profile" containing a list item "- Profile: brownfield"');
+    }
+    return { profile: 'standard', boundaries: [], sectionPresent: false, errors };
   }
   const section = normalized.slice(match.index + match[0].length).split(/^##\s+/m, 1)[0];
   const profileMatch = section.match(/^\s*-\s*(?:\*\*)?Profile(?:\*\*)?\s*:\s*([^\s]+)\s*$/im);
@@ -69,7 +77,7 @@ export function parseEngineeringProfile(content) {
   const errors = [];
   const profile = profileMatch?.[1]?.toLowerCase();
   if (!profile || !['standard', 'brownfield'].includes(profile)) {
-    errors.push('Engineering Profile must declare Profile: standard or brownfield');
+    errors.push("Engineering Profile must declare Profile: standard or brownfield as a list item in the form '- Profile: brownfield'");
   }
   const boundaries = boundariesMatch?.[1]
     ? boundariesMatch[1].split(',').map(value => value.trim().toLowerCase()).filter(Boolean)
@@ -213,7 +221,15 @@ function validateTraceability(trace, { requirements, brownfield }, headings, bou
   }
   if (trace.schema_version !== 1) issues.push(issue('traceability.json', 'schema_version must be 1'));
   const expectedProfile = brownfield ? 'brownfield' : 'standard';
-  if (trace.profile !== expectedProfile) issues.push(issue('traceability.json', `profile must be '${expectedProfile}'`));
+  if (trace.profile !== expectedProfile) {
+    // A brownfield trace paired with a standard-parsed proposal almost always
+    // means the proposal's Engineering Profile section exists but was not
+    // recognized — point at that root cause instead of demanding the opposite.
+    const hint = !brownfield && trace.profile === 'brownfield'
+      ? " — the proposal's Engineering Profile parsed as 'standard'; check that proposal.md has a level-two heading '## Engineering Profile' with a list item '- Profile: brownfield'"
+      : '';
+    issues.push(issue('traceability.json', `profile must be '${expectedProfile}'${hint}`));
+  }
   const collections = ['requirements', 'design_items', 'files', 'tasks', 'tests'];
   for (const collection of collections) {
     if (!Array.isArray(trace[collection])) issues.push(issue('traceability.json', `${collection} must be an array`));

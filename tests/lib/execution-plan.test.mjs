@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   adjudicateWave, createGitRangeValidator, createPlan as createRawPlan, describeWaves, readCurrentReview, readPlan,
+  readReviewReceiptForDiagnostics,
   recordReview, resyncPlan, validatePlan, writePlan, writePlanRevision,
 } from '../../scripts/lib/execution-plan.mjs';
 import { createRecommendationReceipt, recommendExecutionModes, validateRecommendationReceiptStructure } from '../../scripts/lib/execution-recommendation.mjs';
@@ -1755,6 +1756,19 @@ describe('final review binds the delivered code', () => {
     runGit(changeDir, ['commit', '-m', 'additional behavior']);
     assert.equal(checkExecutionReviewsPassed(changeDir).pass, false);
     assert.equal(readCurrentReview(changeDir, 'final', plan), null);
+  });
+
+  it('keeps a stale final receipt visible to completion diagnostics', () => {
+    const plan = createPlan(changeDir, { mode: 'inline', reviewPolicy: 'final', source: 'user-confirmed', rationale: 'diagnose stale heads', waves: [{ id: 'w1', strategy: 'serial', tasks: ['1.1'], depends_on: [] }] });
+    writePlan(changeDir, plan);
+    recordReview(changeDir, 'final', { status: 'pass', ...gitRefs, report: writeReviewReport('stale-diagnose.md') });
+    runGit(changeDir, ['commit', '--allow-empty', '-m', 'moves HEAD after the review']);
+    // The evidence gate drops the receipt (stale head), but diagnostics must
+    // still see it to name "HEAD moved after the review" as the real blocker.
+    assert.equal(readCurrentReview(changeDir, 'final', plan), null);
+    const raw = readReviewReceiptForDiagnostics(changeDir, 'final', plan);
+    assert.equal(raw?.status, 'pass');
+    assert.notEqual(raw?.head, runGit(changeDir, ['rev-parse', 'HEAD']));
   });
 });
 

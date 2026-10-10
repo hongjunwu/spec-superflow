@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, lstatSync, realpathSync } from 'no
 import { execFileSync, spawnSync } from 'node:child_process';
 import { resolve, relative, isAbsolute, sep } from 'node:path';
 import { parseTasks } from './task-parser.mjs';
-import { blockingPlanFailures, createPlan, readPlan, validatePlan, writePlan, writePlanRevision, describeReviews } from './execution-plan.mjs';
+import { blockingPlanFailures, createPlan, readPlan, readReviewReceiptForDiagnostics, reviewTargets, validatePlan, writePlan, writePlanRevision, describeReviews } from './execution-plan.mjs';
 import { readIsolationContext, resolveIsolationChange } from './isolation-context.mjs';
 import { computeArtifactsHash, computeContractHash } from './hash.mjs';
 import { runGuard } from '../guard/guard.mjs';
@@ -29,6 +29,7 @@ const OPTIONS = {
   path: { type: 'string' },
   scope: { type: 'string' },
   'accept-risk': { type: 'boolean', default: false },
+  'dry-run': { type: 'boolean', default: false },
   'task-count': { type: 'string' },
   'file-count': { type: 'string' },
   'config-doc-only': { type: 'string' },
@@ -231,10 +232,11 @@ function start(dir, values) {
 }
 
 function complete(dir, values) {
-  const root = checkChangePath(dir);
   const state = readState(dir);
   if (!['planned', 'direct'].includes(state.workflow_variant)) throw new Error('Legacy change: use its existing closure commands');
   if (state.state === 'closing') return print({ ok: true, outcome: state.completion_outcome }, values.json);
+  if (values['dry-run']) return completeDryRun(dir, state, values);
+  const root = checkChangePath(dir);
   if (!['executing', 'debugging'].includes(state.state)) throw new Error('Only active implementation can complete');
   if (state.workflow_variant === 'planned') {
     const plan = readPlan(dir), validation = validatePlan(dir, plan);
@@ -278,6 +280,111 @@ function complete(dir, values) {
   }
   state.state = 'closing'; state.last_transition = new Date().toISOString(); writeState(dir, state);
   return print({ ok: true, outcome: state.completion_outcome, verification: state.test_result }, values.json);
+}
+
+// Non-destructive preflight for `workflow complete --dry-run`. Runs every
+// completion gate without executing the verification command or writing state,
+// and prints a fix command per blocking check. The closing order matters: any
+// commit between the final review and complete invalidates the review, so the
+// output always ends with the canonical order reminder.
+function completeDryRun(dir, state, values) {
+  const checks = [];
+  const add = (name, pass, detail, fix) => checks.push({ name, pass: pass === true, detail: detail ?? '', fix: fix ?? null });
+  const active = ['executing', 'debugging'].includes(state.state);
+  add('state', active, `state=${state.state}, workflow=${state.workflow}, variant=${state.workflow_variant}`,
+    active ? null : 'only active implementation (executing/debugging) can complete');
+
+  let root = null;
+  try {
+    root = checkChangePath(dir);
+    add('change path', true, root, null);
+  } catch (error) {
+    add('change path', false, error.message, null);
+  }
+
+  if (state.workflow_variant === 'planned') {
+    const plan = readPlan(dir);
+    if (!plan) {
+      add('execution plan', false, 'no execution plan found',
+        'recover it with `ssf workflow start <dir> --path planned --confirm --reason "<approval>"`');
+    } else {
+      const validation = validatePlan(dir, plan);
+      add('execution plan', validation.valid,
+        validation.valid ? `revision ${plan.revision} valid` : validation.failures.join('; '),
+        validation.valid ? null : 'recover the plan with `ssf workflow start <dir> --path planned --confirm --reason "<approval>"`');
+      if (isBrownfieldChange(dir)) {
+        const conflicts = listOpenTechnicalConflicts(dir, plan);
+        add('technical conflicts', conflicts.length === 0,
+          conflicts.length ? `open: ${conflicts.map(conflict => conflict.task_id).join(', ')}` : 'none open',
+          conflicts.length ? 'resolve the recorded technical conflicts before completion' : null);
+      }
+      const reviews = describeReviews(dir, plan);
+      const currentHead = gitLine(dir, ['rev-parse', 'HEAD']);
+      for (const wave of reviewTargets(plan)) {
+        const described = reviews.find(entry => entry.id === wave.id);
+        const blockers = described?.blockers ?? [];
+        // describeReviews drops a receipt whose head is stale, so the raw
+        // receipt is read separately to name the actual blocker: HEAD moved.
+        const raw = readReviewReceiptForDiagnostics(dir, wave.id, plan);
+        const stale = raw?.status === 'pass' && raw.head !== currentHead;
+        add(`review:${wave.id}`, blockers.length === 0 && raw?.status === 'pass' && !stale,
+          blockers.length ? blockers.join('; ')
+            : stale ? `receipt head=${raw.head} but current HEAD=${currentHead} — any commit after the review invalidates it`
+            : `status=${raw?.status ?? 'missing'}`,
+          stale
+            ? `re-record the review against current HEAD: \`ssf execution review <dir> --wave ${wave.id} --head ${currentHead} --report <report> --status pass\`; resync is only for non-semantic artifact corrections`
+            : raw?.status !== 'pass'
+              ? `record a passing review: \`ssf execution review <dir> --wave ${wave.id} --head <current HEAD> --report <report> --status pass\``
+              : null);
+      }
+    }
+  } else {
+    const receipt = readWorkflowSelection(dir);
+    add('direct receipt', receipt.valid && isDirectWorkflowReceipt(receipt.record, state),
+      receipt.valid ? 'valid' : 'missing or invalid',
+      receipt.valid ? null : 're-record the direct request: `ssf workflow start <dir> --path direct --scope "<request>"`');
+  }
+
+  if (state.workflow_variant === 'planned') {
+    try {
+      const target = root ?? gitLine(dir, ['rev-parse', '--show-toplevel']);
+      const prefix = execFileSync('git', ['-C', dir, 'rev-parse', '--show-prefix'], { encoding: 'utf8' }).trim();
+      const dirty = execFileSync('git', ['-C', target, 'status', '--porcelain', '--untracked-files=all', '--', '.', `:(exclude,literal)${prefix.replace(/\/$/, '')}`], { encoding: 'utf8' }).trim();
+      add('working tree outside change dir', !dirty,
+        dirty ? dirty.split('\n').join(' | ') : 'clean',
+        dirty ? 'commit these changes first — completion compares HEAD against the reviewed snapshot' : null);
+    } catch (error) {
+      add('working tree outside change dir', false, error.message, null);
+    }
+  }
+
+  let guardDetail = '';
+  try {
+    const output = { write(text) { guardDetail += text; } };
+    runGuard(['check', dir, 'executing', 'closing', '--json'], { stdout: output, stderr: output });
+    const report = JSON.parse(guardDetail);
+    for (const check of report.checks) {
+      add(`guard:${check.dimension}`, check.pass, check.failures.join('; '),
+        check.pass ? null : 'follow the closing order: sync specs -> commit everything -> record the final review -> immediately complete');
+    }
+  } catch (error) {
+    add('guard', false, guardDetail.trim() || error.message, null);
+  }
+
+  const blocked = checks.filter(check => !check.pass).length;
+  if (values.json) {
+    print({ ok: blocked === 0, checks }, true);
+  } else {
+    console.log('Completion dry run — no state was modified, no verification command was executed.');
+    for (const check of checks) {
+      console.log(` ${check.pass ? 'PASS' : 'BLOCK'} ${check.name}${check.detail ? `: ${check.detail}` : ''}`);
+      if (!check.pass && check.fix) console.log(`       Fix: ${check.fix}`);
+    }
+    console.log(blocked === 0
+      ? 'All preflight checks pass. Run `ssf workflow complete <dir> --verification-command "<cmd>"` immediately, with zero commits in between. Closing order: sync specs -> commit everything -> record final review -> complete.'
+      : `${blocked} check(s) would block completion. Closing order: sync specs -> commit everything -> record final review -> complete.`);
+  }
+  if (blocked > 0) process.exitCode = 1;
 }
 
 function recommend(changeDir, values) {
@@ -551,7 +658,7 @@ function fail(message, exitCode) {
 }
 
 function printHelp() {
-  console.log('New tasks: ssf workflow start <dir> --path direct --scope <request> | --path planned --confirm --reason <approval> [--mode sdd]\nComplete: ssf workflow complete <dir> --verification-command <command> | --accept-risk --confirm --reason <decision>\nThe following commands are legacy compatibility:');
+  console.log('New tasks: ssf workflow start <dir> --path direct --scope <request> | --path planned --confirm --reason <approval> [--mode sdd]\nComplete: ssf workflow complete <dir> --verification-command <command> | --accept-risk --confirm --reason <decision>\nPreflight: ssf workflow complete <dir> --dry-run — list every closure blocker with its fix, no state change\nThe following commands are legacy compatibility:');
   console.log(`Usage:
   ssf workflow recommend <change-dir> [--task-count <n>] [--file-count <n>] [--config-doc-only yes|no|unknown] [--schema-api-change yes|no|unknown] [--new-module yes|no|unknown] [--behavioral-constraint-change yes|no] [--cross-module-change yes|no] [--uncertainty low|high|unknown] [--request-kind standard|incident] [--affected-path <path>] [--production-behavior yes|no|unknown] [--public-boundary yes|no|unknown] [--installer yes|no|unknown] [--state-machine yes|no|unknown] [--external-side-effect yes|no|unknown] [--data-permission-config-semantics yes|no|unknown] [--expected-behavior-clear yes|no|unknown] [--verification-reproducible yes|no|unknown] [--impact-paths-complete yes|no|unknown] [--json]
   ssf workflow select <change-dir> --mode full|hotfix|tweak|quick|lightweight --confirm --reason <text> [--scope-confirmation <text>] [--acknowledge-recommendation] [--verification tdd|new-test|bounded] [--json]

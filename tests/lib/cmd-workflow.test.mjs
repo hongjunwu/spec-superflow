@@ -181,6 +181,31 @@ describe('ssf workflow', () => {
     assert.match(result.stdout, /workflow accept <change-dir> --source direct-request/);
   });
 
+  it('reports every closure blocker without touching state on complete --dry-run', () => {
+    // Direct variant without a receipt: the preflight must name the fix.
+    writeState('state: executing\nworkflow: quick\nworkflow_variant: direct\n');
+    const before = readFileSync(join(changeDir, '.spec-superflow.yaml'), 'utf8');
+    const direct = runSsf(['workflow', 'complete', changeDir, '--dry-run']);
+    assert.equal(direct.exitCode, 1);
+    assert.match(direct.stdout, /BLOCK direct receipt/);
+    assert.match(direct.stdout, /Fix: .*workflow start/);
+    assert.equal(readFileSync(join(changeDir, '.spec-superflow.yaml'), 'utf8'), before, 'dry run must not modify state');
+
+    // Planned variant without a plan: same preflight, plan-specific fix.
+    writeState('state: executing\nworkflow: full\nworkflow_variant: planned\n');
+    const planned = runSsf(['workflow', 'complete', changeDir, '--dry-run', '--json']);
+    assert.equal(planned.exitCode, 1);
+    const planCheck = planned.json.checks.find(check => check.name === 'execution plan');
+    assert.equal(planCheck.pass, false);
+    assert.match(planCheck.fix, /workflow start/);
+
+    // Closing stays idempotent even under --dry-run.
+    writeState('state: closing\nworkflow: quick\nworkflow_variant: direct\ncompletion_outcome: verified\n');
+    const closed = runSsf(['workflow', 'complete', changeDir, '--dry-run', '--json']);
+    assert.equal(closed.exitCode, 0);
+    assert.equal(closed.json.outcome, 'verified');
+  });
+
   it('accepts a recommended quick path from a direct request without --confirm', () => {
     const recommended = recommend();
     assert.equal(recommended.exitCode, 0, recommended.stderr);

@@ -58,11 +58,15 @@ When DP-0 has made the scope clear, generate the configured planning pack (propo
 
 ## Validation Checklist
 
+Authoritative machine rules (formats, IDs, prefixes, field lists) live in `docs/artifact-format.md` — read it before writing brownfield artifacts instead of guessing from validator errors.
+
 ### proposal.md
 - `## Why` > 50 chars, `## What Changes`, `## Scope` (In/Out), `## Impact`, no TBD/TODO; claims name an observed problem and a completion proof
+- Engineering Profile: level-two heading `## Engineering Profile`, `- Profile: <standard|brownfield>` list item, boundaries from the enumerated set only (`api`, `database`, `integration`, `public-model`, `permission`, `migration`, `impact`); an unparseable section silently degrades to standard and misleads every later error
 
 ### specs/
 - SHALL/MUST for required behavior, `#### Scenario:` with WHEN/THEN per requirement, grouped under delta headers, no contradictions
+- Delta operations describe changes to the specification baseline, not to the code: spec'ing pre-existing behavior for the first time is ADDED (mark the requirement `[legacy]`); MODIFIED only when the requirement already exists in the published baseline
 
 ### design.md
 - facts/constraints, goals/non-goals, `## Decisions` (≥1, with Choice+Rationale+Alternatives+Consequences), risks and verification
@@ -70,6 +74,11 @@ When DP-0 has made the scope clear, generate the configured planning pack (propo
 ### tasks.md
 - delivery/proof map, numbered tasks, affected paths or bounded areas, observable outcomes, no placeholders, every requirement mapped, explicit dependencies
 - Must use the template checkbox format (one `- [ ]` per task on its own line); the guard enforces this format when entering execution
+
+### Brownfield additional (technical-design.md + traceability.json)
+- Design headings `### <KIND>-<n>: <title>` with full kind words (`ARCH-001`, never `arch`), each under its own section, with the required field list per kind (`docs/artifact-format.md`)
+- traceability.json: `REQ-/API-/DB-/MODEL-/INT-/IMPACT-/ARCH-/MIGRATION-/FILE-/TEST-<n>` ids, numeric task ids (`1.1`), every declared task reference repeated verbatim in that task's `Refs:` line, every task body carries a `证明：\`<command>\`` proof and names the file it changes
+- Run `SSF validate <dir>` and fix before handoff; format details are in `docs/artifact-format.md`
 
 **If any artifact fails validation, fix before handing off to contract-builder.**
 

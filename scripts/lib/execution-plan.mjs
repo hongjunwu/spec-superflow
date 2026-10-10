@@ -700,6 +700,26 @@ export function readCurrentReview(changeDir, waveId, plan = readPlan(changeDir))
   return readCurrentReviewEvidence(changeDir, waveId, plan).receipt;
 }
 
+/**
+ * Raw receipt for diagnostics: unlike readCurrentReview it survives a stale
+ * head so preflight tooling can tell the author exactly why completion would
+ * fail (reviewed HEAD vs current HEAD) instead of reporting a missing review.
+ */
+export function readReviewReceiptForDiagnostics(changeDir, waveId, plan = readPlan(changeDir)) {
+  if (!plan) return null;
+  const currentScope = getPlanScopedPaths(changeDir, plan);
+  const currentPath = join(currentScope.reviews, `${safeFileName(waveId)}.json`);
+  const legacyPath = join(getOverlayPaths(changeDir).reviews, `${safeFileName(waveId)}.json`);
+  const filePath = existsSync(currentPath) ? currentPath : legacyPath;
+  if (!existsSync(filePath)) return null;
+  try {
+    const receipt = JSON.parse(readFileSync(filePath, 'utf8'));
+    return receipt?.plan_hash === plan.hash && receipt?.plan_revision === plan.revision ? receipt : null;
+  } catch {
+    return null;
+  }
+}
+
 function readCurrentReviewEvidence(changeDir, waveId, plan = readPlan(changeDir)) {
   if (!plan) return { receipt: null, blocker: null };
   const currentScope = getPlanScopedPaths(changeDir, plan);

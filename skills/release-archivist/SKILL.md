@@ -15,6 +15,17 @@ Read `SSF resume <change-dir> --json`. In `executing`, complete verification and
 
 Use `SSF workflow complete <dir> --verification-command "<required check command>"`. It runs final verification once; do not run the identical full suite immediately before invoking it. Planned execution additionally checks completed tasks, current full-range/wave review and any delta-spec publication. Direct execution needs no plan or review receipt. Ordinary failures stay in executing for focused repair. Do not add DP-6/DP-7 or another approval to authorized code delivery.
 
+A final review receipt only certifies the exact commit it names: **any commit after the review invalidates it**. Closing therefore has one valid order — run it top to bottom, never interleave:
+
+1. Finish implementation and check off tasks in `tasks.md`.
+2. `SSF sync <dir>` when the change carries delta specs (publication receipt binds to the resulting baseline).
+3. Commit **everything** — change artifacts and any main-repo files (e.g. published `specs/`). Zero dirty files, zero pending commits.
+4. Record the final review against the current HEAD (`SSF execution review <dir> --wave final --head <HEAD> --report <report> --status pass`).
+5. Immediately run `SSF workflow complete <dir> --verification-command "<cmd>"` with **zero commits in between**.
+6. Archive.
+
+When step 5 rejects, run `SSF workflow complete <dir> --dry-run` first: it lists every blocker with its fix command without changing state. Do not guess which gate failed. If HEAD moved after the review because only artifacts/state files were committed, re-record the review (the diff is empty) instead of hunting the "real" change. `SSF execution resync` is only for non-semantic planning-document corrections, never for review re-anchoring.
+
 If the user explicitly accepts unfinished work or failed verification, use `SSF workflow complete <dir> --accept-risk --confirm --reason "<decision and remaining issues>"`. Preserve every failure and report accepted-risk, not verified success. This ends code delivery without merging or deleting the branch. A plain closing transition cannot bypass failed checks. For verified work, physical integration remains a separate authorized operation. The remaining closure steps are legacy compatibility.
 
 ## Bounded paths
