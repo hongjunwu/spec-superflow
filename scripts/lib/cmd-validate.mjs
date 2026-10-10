@@ -2,6 +2,7 @@
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, basename, dirname, resolve } from 'node:path';
 import { loadConfig } from './config-loader.mjs';
+import { baselineSpecFile, projectRootForChange } from './layout.mjs';
 import { validateSpecPathLayout, relativeSpecPath } from './spec-paths.mjs';
 import { applyDeltaToBaselineDetailed } from './spec-publication.mjs';
 import { formatTechnicalMapping, validateTechnicalChange } from './technical-validation.mjs';
@@ -26,14 +27,15 @@ function printReport(label, report) {
 
 function projectRootForStandardChange(changeDir) {
   const resolvedChangeDir = resolve(changeDir);
-  const changesDir = dirname(resolvedChangeDir);
-  return basename(changesDir) === 'changes' ? dirname(changesDir) : null;
+  // Only standard openspec/changes/<change> layouts get a baseline preflight;
+  // a self-contained change directory has no project baseline to check.
+  return basename(dirname(resolvedChangeDir)) === 'changes' ? projectRootForChange(resolvedChangeDir) : null;
 }
 
 function preflightDeltaBaseline(projectRoot, specFile, content) {
   if (!projectRoot) return null;
   const capability = basename(dirname(specFile));
-  const baselinePath = join(projectRoot, 'specs', capability, 'spec.md');
+  const baselinePath = baselineSpecFile(projectRoot, capability);
   const baseline = existsSync(baselinePath) ? readFileSync(baselinePath, 'utf-8') : '';
   try {
     applyDeltaToBaselineDetailed(baseline, content, capability);

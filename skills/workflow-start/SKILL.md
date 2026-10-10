@@ -25,7 +25,7 @@ Update checks are optional (`SSF runtime check-update`), cached and non-blocking
 
 ## New request
 
-Infer scope and risks from the request and repository; do not turn CLI fields into a questionnaire. Validate the change name as a single safe relative path segment under `changes/` and create only that directory. Reuse authorization already given. Never infer approval from artifact existence.
+Infer scope and risks from the request and repository; do not turn CLI fields into a questionnaire. Validate the change name as a single safe relative path segment under `openspec/changes/` and create only that directory. Reuse authorization already given. Never infer approval from artifact existence.
 
 Offer only two paths, without a mode-selection interview:
 

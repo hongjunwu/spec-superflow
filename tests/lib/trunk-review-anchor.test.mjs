@@ -29,7 +29,7 @@ function developTrunkFixture(t) {
   fs.writeFileSync(join(root, 'seed.txt'), 'seed\n');
   git('add', '-A');
   git('commit', '-qm', 'base');
-  const dir = join(root, 'changes', 'demo');
+  const dir = join(root, 'openspec', 'changes', 'demo');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(join(dir, 'tasks.md'), '# Tasks\n\n- [ ] 1 do the work\n');
   fs.writeFileSync(join(dir, 'proposal.md'), '# Proposal\n\n## Why\n\nTrunk-branch review-anchor regression coverage.\n\n## What Changes\n\n- Record the start anchor and use it for the final review range.\n');
@@ -165,7 +165,7 @@ test('review accepts the change directory as either a relative or absolute path'
   f.report();
   // INSTALL.md documents the relative form, so both spellings must behave alike.
   const relative = spawnSync(process.execPath,
-    [CLI, 'execution', 'review', 'changes/demo', '--wave', 'final', '--base', anchor, '--head', head,
+    [CLI, 'execution', 'review', 'openspec/changes/demo', '--wave', 'final', '--base', anchor, '--head', head,
       '--report', '.superpowers/sdd/reviews/final.md', '--verdict', 'pass'],
     { cwd: f.root, encoding: 'utf8' });
   assert.equal(relative.status, 0, relative.stderr);

@@ -1,7 +1,8 @@
-// ssf list — scan changes/ and report status
+// ssf list — scan openspec/changes/ and report status
 import { readdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadConfig } from './config-loader.mjs';
+import { changesRoot } from './layout.mjs';
 import { readState } from './state-loader.mjs';
 
 function detectChangeStatus(changeDir) {
@@ -45,10 +46,10 @@ export { detectChangeStatus };
 
 export async function run(args) {
   const config = loadConfig(process.cwd());
-  const changesDir = join(process.cwd(), 'changes');
+  const changesDir = changesRoot(process.cwd());
 
   if (!existsSync(changesDir)) {
-    console.log('No changes/ directory found.');
+    console.log('No openspec/changes/ directory found.');
     return;
   }
 
@@ -57,7 +58,7 @@ export async function run(args) {
   });
 
   if (dirs.length === 0) {
-    console.log('No changes found in changes/');
+    console.log('No changes found in openspec/changes/');
     return;
   }
 

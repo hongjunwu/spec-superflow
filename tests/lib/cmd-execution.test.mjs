@@ -1111,7 +1111,7 @@ describe('ssf execution review — cwd 越界 WARN（worktree-lifecycle R5）', 
     const main = join(tmpBase, 'main');
     makeRepo(main);
     const name = 'warn-outside';
-    const changePath = join(main, 'changes', name);
+    const changePath = join(main, 'openspec', 'changes', name);
     mkdirSync(changePath, { recursive: true });
     writeChangeDirectory(changePath);
     const gitBase = runGit(main, ['rev-parse', 'HEAD']);
@@ -1151,7 +1151,7 @@ describe('ssf execution review — cwd 越界 WARN（worktree-lifecycle R5）', 
     const main = join(tmpBase, 'main');
     makeRepo(main);
     const name = 'warn-inside';
-    const changePath = join(main, 'changes', name);
+    const changePath = join(main, 'openspec', 'changes', name);
     mkdirSync(changePath, { recursive: true });
     writeChangeDirectory(changePath);
     const gitBase = runGit(main, ['rev-parse', 'HEAD']);
@@ -1185,7 +1185,7 @@ describe('ssf execution review — cwd 越界 WARN（worktree-lifecycle R5）', 
     const main = join(tmpBase, 'main');
     makeRepo(main);
     const name = 'warn-none';
-    const changePath = join(main, 'changes', name);
+    const changePath = join(main, 'openspec', 'changes', name);
     mkdirSync(changePath, { recursive: true });
     writeChangeDirectory(changePath);
     // 在默认分支上创建一个提交并建立非 protected 分支，满足 R4 分支校验

@@ -9,7 +9,7 @@ description: Sync delta specs to main specs before closure. Invoke while an exec
 
 Before executing a CLI line below, replace its leading `SSF` with `node "<plugin-root>/scripts/spec-superflow.mjs"`; `<plugin-root>` is the absolute directory two levels above this file. Never run `SSF` literally or call an `ssf` from `PATH`.
 
-Before the final `executing → closing` transition, delta specs (ADDED/MODIFIED/REMOVED/RENAMED) must be published into the main spec base. `changes/<change>/` remains the active workflow source; root `specs/` is only the published baseline. **Specs that aren't synced become lies.** A change already in `closing` must not be routed to `spec-merger`.
+Before the final `executing → closing` transition, delta specs (ADDED/MODIFIED/REMOVED/RENAMED) must be published into the main spec base. `openspec/changes/<change>/` remains the active workflow source; `openspec/specs/` is only the published baseline. **Specs that aren't synced become lies.** A change already in `closing` must not be routed to `spec-merger`.
 
 ## Execution-State Guard
 

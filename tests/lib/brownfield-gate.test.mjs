@@ -24,7 +24,7 @@ function brownfieldFixture(t) {
   git('config', 'user.name', 'Spec Superflow Test');
   git('config', 'user.email', 'tests@example.invalid');
 
-  const dir = join(root, 'changes', 'bf');
+  const dir = join(root, 'openspec', 'changes', 'bf');
   fs.mkdirSync(join(dir, 'specs', 'salary'), { recursive: true });
   fs.writeFileSync(join(dir, 'proposal.md'), [
     '# Proposal', '', '## Why', '',

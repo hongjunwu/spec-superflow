@@ -13,7 +13,7 @@ describe('change-recovery: resolveChangeTarget()', () => {
 
   before(() => {
     root = mkdtempSync(join(tmpdir(), 'ssf-change-recovery-test-'));
-    mkdirSync(join(root, 'changes'));
+    mkdirSync(join(root, 'openspec', 'changes'), { recursive: true });
   });
 
   after(() => {
@@ -21,7 +21,7 @@ describe('change-recovery: resolveChangeTarget()', () => {
   });
 
   function makeChange(name, state) {
-    const changeDir = join(root, 'changes', name);
+    const changeDir = join(root, 'openspec', 'changes', name);
     mkdirSync(changeDir);
     writeFileSync(join(changeDir, '.spec-superflow.yaml'), `state: ${state}\n`);
     return changeDir;

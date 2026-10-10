@@ -847,10 +847,26 @@ ls .pi/skills   # 应有 12 个 skill 目录
 
 ## 工作流目录约定
 
+项目采用 OpenSpec 形式的目录布局——发布基线与活跃变更收拢在同一个 `openspec/` 父目录下：
+
+```text
+openspec/
+├── changes/<change-name>/   # 活跃变更工件
+│   ├── proposal.md
+│   ├── design.md
+│   ├── tasks.md
+│   ├── specs/
+│   │   └── <capability>/
+│   │       └── spec.md
+│   └── execution-contract.md
+└── specs/<capability>/      # 已发布基线（ssf sync 的写入目标）
+    └── spec.md
+```
+
 对于名为 `<change-name>` 的变更：
 
 ```text
-changes/<change-name>/
+openspec/changes/<change-name>/
 ├── proposal.md
 ├── design.md
 ├── tasks.md
@@ -877,23 +893,23 @@ Inline 始终串行，不会表示并行。Quick、direct Hotfix 与 `tweak`
 免除 contract、execution plan、review receipt 和 DP gate；它们在边界内验证后持久化 `test_result: pass`。
 
 ```bash
-ssf execution recommend changes/my-change \
+ssf execution recommend openspec/changes/my-change \
   --wave foundation:parallel:1.1,1.2 \
   --wave integration:serial:2.1:foundation --json
-ssf execution plan changes/my-change --mode sdd --confirm --acknowledge-recommendation --reason "independent work" \
+ssf execution plan openspec/changes/my-change --mode sdd --confirm --acknowledge-recommendation --reason "independent work" \
   --wave foundation:parallel:1.1,1.2 \
   --wave integration:serial:2.1:foundation
-ssf execution show changes/my-change --json
+ssf execution show openspec/changes/my-change --json
 # 修订可以保留或切换模式；保留适用证据和未解决失败，不强制升级。
-ssf execution recommend changes/my-change \
+ssf execution recommend openspec/changes/my-change \
   --wave foundation:parallel:1.1,1.2 \
   --wave integration:serial:2.1:foundation --json
-ssf execution revise changes/my-change --mode sdd --confirm --acknowledge-recommendation --reason "need parallel work" \
+ssf execution revise openspec/changes/my-change --mode sdd --confirm --acknowledge-recommendation --reason "need parallel work" \
   --wave foundation:parallel:1.1,1.2 \
   --wave integration:serial:2.1:foundation
-ssf execution review changes/my-change --wave foundation --base <sha> --head <sha> \
+ssf execution review openspec/changes/my-change --wave foundation --base <sha> --head <sha> \
   --report .superpowers/sdd/reviews/foundation.md --verdict pass
-ssf finish changes/my-change
+ssf finish openspec/changes/my-change
 ```
 
 `--report` 相对于 `<change>` 解析，且必须位于
@@ -926,8 +942,8 @@ Delta spec 的规范路径是 `specs/<capability>/spec.md`。扁平的 `specs/<c
 ### `ssf inject` 用法
 
 ```bash
-ssf inject changes/my-change --platforms cursor
-ssf inject changes/my-change --platforms all
+ssf inject openspec/changes/my-change --platforms cursor
+ssf inject openspec/changes/my-change --platforms all
 ```
 
 省略 `--platforms` 时，只有在项目里**恰好检测到一个**平台标记时才会自动注入；如果检测到多个平台，必须显式传 `--platforms <platform>` 或 `--platforms all`。
@@ -936,16 +952,16 @@ ssf inject changes/my-change --platforms all
 
 ```bash
 ssf resume                         # 恰好一个活跃 change 时才自动选择
-ssf resume changes/my-change       # 只读恢复指定 change 摘要
-ssf switch changes/another-change  # 只读返回明确 change 的恢复上下文
-ssf save changes/my-change --task 1.1 --next "Run focused tests"
-ssf checkpoint save changes/my-change --task 1.1 --next "Run focused tests"
-ssf checkpoint list changes/my-change
-ssf checkpoint show changes/my-change 1.1
-ssf handoff create changes/my-change --type research --objective "Compare approaches" --expected-output "Recommendation" --acceptance "Evidence recorded"
-ssf handoff list changes/my-change
-ssf handoff finish changes/my-change <handoff-id>
-ssf handoff resolve changes/my-change <handoff-id> --decision accept
+ssf resume openspec/changes/my-change       # 只读恢复指定 change 摘要
+ssf switch openspec/changes/another-change  # 只读返回明确 change 的恢复上下文
+ssf save openspec/changes/my-change --task 1.1 --next "Run focused tests"
+ssf checkpoint save openspec/changes/my-change --task 1.1 --next "Run focused tests"
+ssf checkpoint list openspec/changes/my-change
+ssf checkpoint show openspec/changes/my-change 1.1
+ssf handoff create openspec/changes/my-change --type research --objective "Compare approaches" --expected-output "Recommendation" --acceptance "Evidence recorded"
+ssf handoff list openspec/changes/my-change
+ssf handoff finish openspec/changes/my-change <handoff-id>
+ssf handoff resolve openspec/changes/my-change <handoff-id> --decision accept
 ```
 
 `resume` 与 `switch` 是只读恢复操作；`resume` 只会在恰好一个活跃 change 时自动选择。`switch` 只返回明确目标的恢复上下文，不修改 cwd、TUI 会话或任何隐藏指针；CLI 本身不切换当前对话关注对象，CodeBuddy/WorkBuddy adapter 或宿主 Agent 可用该上下文完成该动作。`save` 只手动复用既有 checkpoint 协议，不自动 commit、push 或 sync。`/ssf:resume`、`/ssf:switch`、`/ssf:save` 是 CodeBuddy/WorkBuddy Markdown command adapter，会分发至相同的 CLI guard，不为其他平台承诺完全相同的 slash 名称。

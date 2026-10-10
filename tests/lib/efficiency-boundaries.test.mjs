@@ -27,7 +27,7 @@ function fixture(t) {
   const base = git('rev-parse', 'HEAD'); git('switch', '-c', 'feature');
   const commit = text => { fs.writeFileSync(join(root, 'code.txt'), text); git('add', '.'); git('commit', '-qm', text); return git('rev-parse', 'HEAD'); };
   const first = commit('first'), head = commit('second');
-  const dir = join(root, 'changes', 'demo'); fs.mkdirSync(dir, { recursive: true });
+  const dir = join(root, 'openspec', 'changes', 'demo'); fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(join(dir, '.spec-superflow.yaml'), 'state: executing\nworkflow: full\n');
   fs.writeFileSync(join(dir, 'tasks.md'), '- [x] 1 Done\n');
   fs.writeFileSync(join(dir, 'execution-contract.md'), 'Approved contract\n');

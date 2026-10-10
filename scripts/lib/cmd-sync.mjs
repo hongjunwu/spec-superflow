@@ -1,6 +1,7 @@
 // ssf sync <change-dir> — publish a change delta as canonical root baseline specs.
 import { readFileSync, readdirSync, writeFileSync, existsSync, statSync, mkdirSync, renameSync, unlinkSync } from 'node:fs';
 import path, { join } from 'node:path';
+import { changesRoot } from './layout.mjs';
 import { validateSpecPathLayout } from './spec-paths.mjs';
 import {
   applyDeltaToBaselineDetailed,
@@ -97,7 +98,7 @@ export async function run(args, {
 
   // Collect deltas from this project only. The active change path, not cwd,
   // establishes both the publication destination and conflict scope.
-  const changesDir = join(projectRoot, 'changes');
+  const changesDir = changesRoot(projectRoot);
   const allDeltas = [];
   if (existsSync(changesDir)) {
     for (const dir of readdirSync(changesDir)) {

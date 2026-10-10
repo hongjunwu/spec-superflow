@@ -163,7 +163,7 @@ describe('BUG/#15: ensure-branch enforces isolation', () => {
   });
 
   it('SHALL allow (zero) work on a non-protected branch', () => {
-    const change = join(repoDir, 'changes', 'existing-branch');
+    const change = join(repoDir, 'openspec', 'changes', 'existing-branch');
     mkdirSync(change, { recursive: true });
     const r = run(`"${change}"`, false);
     assert.equal(r.ok, true, `ensure-branch should pass on feature branch, got: ${r.out}`);
@@ -171,7 +171,7 @@ describe('BUG/#15: ensure-branch enforces isolation', () => {
   });
 
   it('SHALL create a sibling worktree and carry only the active change artifacts from main', () => {
-    const changeDir = join(repoDir, 'changes', 'planned-change');
+    const changeDir = join(repoDir, 'openspec', 'changes', 'planned-change');
     mkdirSync(changeDir, { recursive: true });
     writeFileSync(join(changeDir, 'proposal.md'), 'Uncommitted planning artifact.');
     git(repoDir, 'checkout', '-q', 'main');
@@ -181,15 +181,15 @@ describe('BUG/#15: ensure-branch enforces isolation', () => {
 
     try {
       assert.equal(r.ok, true, r.out);
-      assert.equal(existsSync(join(worktree, 'changes', 'planned-change', 'proposal.md')), true);
-      assert.equal(existsSync(join(worktree, 'changes', 'planned-change', 'README.md')), false);
+      assert.equal(existsSync(join(worktree, 'openspec', 'changes', 'planned-change', 'proposal.md')), true);
+      assert.equal(existsSync(join(worktree, 'openspec', 'changes', 'planned-change', 'README.md')), false);
 
-      writeFileSync(join(worktree, 'changes', 'planned-change', 'proposal.md'), 'Newer worktree evidence.');
+      writeFileSync(join(worktree, 'openspec', 'changes', 'planned-change', 'proposal.md'), 'Newer worktree evidence.');
       const repeated = run(`"${changeDir}" planned-change`);
       assert.equal(repeated.ok, true, repeated.out);
       assert.match(repeated.out, /existing git worktree .* is ready/i);
       assert.equal(
-        readFileSync(join(worktree, 'changes', 'planned-change', 'proposal.md'), 'utf8'),
+        readFileSync(join(worktree, 'openspec', 'changes', 'planned-change', 'proposal.md'), 'utf8'),
         'Newer worktree evidence.',
         're-running isolation must not overwrite worktree-side evidence',
       );
@@ -199,7 +199,7 @@ describe('BUG/#15: ensure-branch enforces isolation', () => {
   });
 
   it('SHALL default the isolation branch name to the change directory name when no change-name is given', () => {
-    const changeDir = join(repoDir, 'changes', 'default-name');
+    const changeDir = join(repoDir, 'openspec', 'changes', 'default-name');
     mkdirSync(changeDir, { recursive: true });
     writeFileSync(join(changeDir, 'proposal.md'), 'Uncommitted planning artifact.');
     git(repoDir, 'checkout', '-q', 'main');
@@ -218,7 +218,7 @@ describe('BUG/#15: ensure-branch enforces isolation', () => {
   });
 
   it('SHALL reject a change name that is not one safe path segment', () => {
-    const changeDir = join(repoDir, 'changes', 'safe-change');
+    const changeDir = join(repoDir, 'openspec', 'changes', 'safe-change');
     mkdirSync(changeDir, { recursive: true });
     git(repoDir, 'checkout', '-q', 'main');
 
@@ -234,7 +234,7 @@ describe('worktree-lifecycle R1/R2: submodule init + progress cwd warning', () =
     const base = mkdtempSync(join(tmpdir(), 'ssf-ensure-sub-'));
     try {
       const { main } = makeSubmoduleFixtureSafe(base);
-      const changeDir = join(main, 'changes', 'sm-change');
+      const changeDir = join(main, 'openspec', 'changes', 'sm-change');
       mkdirSync(changeDir, { recursive: true });
       writeFileSync(join(changeDir, 'proposal.md'), 'x');
 
@@ -256,7 +256,7 @@ describe('worktree-lifecycle R1/R2: submodule init + progress cwd warning', () =
     try {
       const { main } = makeSubmoduleFixtureSafe(base);
       addBogusSubmodule(main, 'subX', pathToFileURL(join(base, 'does-not-exist')).href);
-      const changeDir = join(main, 'changes', 'bad-change');
+      const changeDir = join(main, 'openspec', 'changes', 'bad-change');
       mkdirSync(changeDir, { recursive: true });
 
       const r = run(`"${changeDir}" bad-change`);
@@ -273,7 +273,7 @@ describe('worktree-lifecycle R1/R2: submodule init + progress cwd warning', () =
     try {
       const { main } = makeSubmoduleFixtureSafe(base);
       addBogusSubmodule(main, 'subX', pathToFileURL(join(base, 'does-not-exist')).href);
-      const changeDir = join(main, 'changes', 'retry-change');
+      const changeDir = join(main, 'openspec', 'changes', 'retry-change');
       mkdirSync(changeDir, { recursive: true });
 
       const first = run(`"${changeDir}" retry-change`);
@@ -299,7 +299,7 @@ describe('worktree-lifecycle R1/R2: submodule init + progress cwd warning', () =
       mkdirSync(main, { recursive: true });
       writeFileSync(join(main, 'README.md'), 'x');
       makeRepo(main);
-      const changeDir = join(main, 'changes', 'plain-change');
+      const changeDir = join(main, 'openspec', 'changes', 'plain-change');
       mkdirSync(changeDir, { recursive: true });
       writeFileSync(join(changeDir, 'proposal.md'), 'x');
 
@@ -321,7 +321,7 @@ describe('worktree-lifecycle R1/R2: submodule init + progress cwd warning', () =
       mkdirSync(main, { recursive: true });
       writeFileSync(join(main, 'README.md'), 'x');
       makeRepo(main);
-      const changeDir = join(main, 'changes', 'pg-change');
+      const changeDir = join(main, 'openspec', 'changes', 'pg-change');
       mkdirSync(join(changeDir, '.superpowers', 'sdd'), { recursive: true });
       writeFileSync(join(changeDir, '.superpowers', 'sdd', 'progress.md'), 'EXISTING RECORD\n');
 
@@ -348,7 +348,7 @@ describe('worktree-lifecycle R1/R2: submodule init + progress cwd warning', () =
     const base = mkdtempSync(join(tmpdir(), 'ssf-ensure-fb-'));
     try {
       const { main } = makeSubmoduleFixtureSafe(base);
-      const changeDir = join(main, 'changes', 'fb-change');
+      const changeDir = join(main, 'openspec', 'changes', 'fb-change');
       mkdirSync(changeDir, { recursive: true });
       writeFileSync(join(changeDir, 'proposal.md'), 'x');
       // A sibling directory must not affect default branch isolation.

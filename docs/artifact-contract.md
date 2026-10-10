@@ -4,6 +4,18 @@
 
 **下文保留旧八状态和 DP 协议，仅供既有 legacy 任务恢复。不要为新任务重走这些步骤。**
 
+## Closing order (direct/planned)
+
+`workflow complete` 的 planned 检查互相耦合：final review 收据只认证它记录的那个 commit（其后任何提交都会使它过期）、工作树必须干净、publication receipt 必须与当前 delta 和基线两侧都匹配。因此收口只有一个合法顺序，按序执行、不要交错：
+
+1. 完成实现并勾选 `tasks.md`。
+2. 变更携带 delta specs 时先 `ssf sync`（receipt 绑定同步后的基线）。
+3. **提交全部内容**——变更工件与主仓文件（如发布后的 `specs/`）。要求零脏文件、零待提交。
+4. 对当前 HEAD 记录 final review：`ssf execution review <dir> --wave final --head <HEAD> --report <report> --status pass`。
+5. **立即**执行 `ssf workflow complete <dir> --verification-command "<cmd>"`，中间零提交。
+6. 归档。
+
+第 5 步被拒时先跑 `ssf workflow complete <dir> --dry-run`：它一次性列出全部阻塞项及修复命令，不改动任何状态。若 HEAD 后移只是因为提交了工件/状态文件（代码 diff 为空），重记 review 即可，不要去找"真正变了什么"。`ssf execution resync` 只用于非语义的规划文档修正，不是 review 重锚定通道。
 
 `spec-superflow` uses five primary artifacts in each change:
 
@@ -34,7 +46,7 @@ Defines:
 - scenarios and acceptance conditions
 - behavioral edges the implementation must respect
 
-In a project using this plugin, `specs/` within an active `changes/<change>/` directory is the change's delta-spec source and the only spec input to that change's workflow state. The project-root `specs/` directory is a separately published baseline: `ssf sync` applies delta operations to it and records a publication receipt on the active change. Root baseline files never determine active transitions; closing verifies the receipt against both sides. The plugin repository itself ships only curated examples, not live change directories or generated baselines.
+In a project using this plugin, `specs/` within an active `openspec/changes/<change>/` directory is the change's delta-spec source and the only spec input to that change's workflow state. The project's `openspec/specs/` directory is a separately published baseline: `ssf sync` applies delta operations to it and records a publication receipt on the active change. Baseline files never determine active transitions; closing verifies the receipt against both sides. The plugin repository itself ships only curated examples, not live change directories or generated baselines.
 
 #### Delta publication compatibility
 

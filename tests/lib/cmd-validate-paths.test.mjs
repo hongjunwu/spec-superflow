@@ -116,7 +116,7 @@ describe('validate commands: spec paths', () => {
 
   it('ssf validate rejects a MODIFIED delta whose standard-project baseline is missing', () => {
     const repo = mkdtempSync(join(tempRoot, 'missing-baseline-repo-'));
-    const dir = join(repo, 'changes', 'missing-baseline');
+    const dir = join(repo, 'openspec', 'changes', 'missing-baseline');
     mkdirSync(join(dir, 'specs', 'ui-theme'), { recursive: true });
     writeBaseChange(dir);
     writeModifiedSpec(join(dir, 'specs', 'ui-theme', 'spec.md'));
@@ -142,7 +142,7 @@ describe('validate commands: spec paths', () => {
 
   it('ssf sync rejects the same nested layout before publishing the canonical spec', () => {
     const repo = mkdtempSync(join(tempRoot, 'nested-sync-repo-'));
-    const dir = join(repo, 'changes', 'nested');
+    const dir = join(repo, 'openspec', 'changes', 'nested');
     mkdirSync(dir, { recursive: true });
     writeBaseChange(dir);
     mkdirSync(join(dir, 'specs', 'auth', 'session'), { recursive: true });
@@ -153,6 +153,6 @@ describe('validate commands: spec paths', () => {
 
     assert.equal(result.exitCode, 1, result.stdout + result.stderr);
     assert.match(result.stdout + result.stderr, /specs\/auth\/session\/spec\.md/);
-    assert.equal(existsSync(join(repo, 'specs', 'auth', 'spec.md')), false);
+    assert.equal(existsSync(join(repo, 'openspec', 'specs', 'auth', 'spec.md')), false);
   });
 });

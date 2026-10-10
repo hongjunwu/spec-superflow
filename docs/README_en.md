@@ -48,24 +48,24 @@ Node.js 20+ is required.
 
 ```bash
 npm install -g spec-superflow
-mkdir -p changes/fix-login-timeout
+mkdir -p openspec/changes/fix-login-timeout
 ```
 
 Use direct execution when the outcome, boundary, and verification are already clear:
 
 ```bash
-ssf workflow start changes/fix-login-timeout \
+ssf workflow start openspec/changes/fix-login-timeout \
   --path direct \
   --scope "Fix login timeout without changing the authentication protocol"
 
-ssf workflow complete changes/fix-login-timeout \
+ssf workflow complete openspec/changes/fix-login-timeout \
   --verification-command "npm test"
 ```
 
 When scope needs agreement, create two short files:
 
 ```text
-changes/add-session-refresh/
+openspec/changes/add-session-refresh/
 ├── proposal.md   # outcome, boundaries, acceptance, risks
 └── tasks.md      # ordered checkbox tasks and the check result for each task
 ```
@@ -73,12 +73,12 @@ changes/add-session-refresh/
 After the user approves that concrete plan:
 
 ```bash
-ssf workflow start changes/add-session-refresh \
+ssf workflow start openspec/changes/add-session-refresh \
   --path planned \
   --confirm \
   --reason "The user approved proposal.md and tasks.md"
 
-ssf workflow complete changes/add-session-refresh \
+ssf workflow complete openspec/changes/add-session-refresh \
   --verification-command "npm test"
 ```
 
@@ -112,7 +112,7 @@ Implementation is serial in the current session by default, followed by a review
 To end with a known issue after an explicit human decision:
 
 ```bash
-ssf workflow complete changes/example \
+ssf workflow complete openspec/changes/example \
   --accept-risk \
   --confirm \
   --reason "Accept the documented compatibility limit for separate follow-up"
@@ -123,8 +123,8 @@ The outcome is `accepted-risk`; the original failures remain recorded, and the b
 Recover existing work with:
 
 ```bash
-ssf resume changes/example
-ssf checkpoint list changes/example
+ssf resume openspec/changes/example
+ssf checkpoint list openspec/changes/example
 ```
 
 Missing or damaged approval records, review results, or Git range information fail explicitly. Defaults never synthesize success. See the [state-machine reference](state-machine.md) for legacy and recovery rules.
@@ -134,13 +134,13 @@ Missing or damaged approval records, review results, or Git range information fa
 The default creates a feature branch in the current checkout:
 
 ```bash
-ssf isolate changes/example
+ssf isolate openspec/changes/example
 ```
 
 Opt into a worktree only when concurrent checkouts are useful:
 
 ```bash
-ssf isolate changes/example --worktree
+ssf isolate openspec/changes/example --worktree
 ```
 
 The repository, branch, and path are recorded and checked during recovery. `ssf finish` only integrates a verified isolation branch. Failed verification preserves the branch and checkout for repair.

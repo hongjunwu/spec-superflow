@@ -169,7 +169,7 @@ describe('cmd-state: transition', () => {
 
   it('uses the caller project directory for a relative change path', () => {
     const projectRoot = mkdtempSync(join(tmpdir(), 'ssf-state-relative-project-'));
-    const changeDir = join(projectRoot, 'changes', 'relative-change');
+    const changeDir = join(projectRoot, 'openspec', 'changes', 'relative-change');
     try {
       mkdirSync(join(changeDir, 'specs', 'test'), { recursive: true });
       writeFileSync(join(changeDir, 'proposal.md'), '## Why\nA relative path transition must inspect artifacts in the caller project, not the plugin directory.\n## What Changes\n- Add a transition fixture.');
@@ -212,7 +212,7 @@ describe('cmd-state: transition', () => {
 
   it('uses the caller project directory for a relative change path', () => {
     const projectRoot = mkdtempSync(join(tmpdir(), 'ssf-state-relative-project-'));
-    const changeDir = join(projectRoot, 'changes', 'relative-change');
+    const changeDir = join(projectRoot, 'openspec', 'changes', 'relative-change');
     try {
       mkdirSync(join(changeDir, 'specs', 'test'), { recursive: true });
       writeFileSync(join(changeDir, 'proposal.md'), '## Why\nA relative path transition must inspect artifacts in the caller project, not the plugin directory.\n## What Changes\n- Add a transition fixture.');

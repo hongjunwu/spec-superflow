@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="#快速开始">快速开始</a> · <a href="#两个执行路径">执行路径</a> · <a href="#9-个-skills">Skills</a> · <a href="#安装">安装</a> · <a href="#命令">命令</a> · <a href="#关注码哥跳动">公众号</a> · <a href="docs/README_en.md">English</a>
+  <a href="#快速开始">快速开始</a> · <a href="#两个执行路径">执行路径</a> · <a href="#9-个-skills">Skills</a> · <a href="#安装">安装</a> · <a href="#命令">命令</a> · <a href="docs/README_en.md">English</a>
 </p>
 
 > 本仓库是 [MageByte-Zero/spec-superflow](https://github.com/MageByte-Zero/spec-superflow) 的 fork，遵循 MIT 许可：原始版权归 MageByte 所有，本 fork 的修改部分版权归 hongjunwu。
@@ -48,24 +48,24 @@ v2 删除新任务的模式问卷和手写 `execution-contract.md`，一份执�
 
 ```bash
 npm install -g spec-superflow
-mkdir -p changes/fix-login-timeout
+mkdir -p openspec/changes/fix-login-timeout
 ```
 
 目标、边界和验证方式已经明确时，直接执行：
 
 ```bash
-ssf workflow start changes/fix-login-timeout \
+ssf workflow start openspec/changes/fix-login-timeout \
   --path direct \
   --scope "修复登录超时，不改变认证协议"
 
-ssf workflow complete changes/fix-login-timeout \
+ssf workflow complete openspec/changes/fix-login-timeout \
   --verification-command "npm test"
 ```
 
 范围需要先对齐时，创建两份短文档：
 
 ```text
-changes/add-session-refresh/
+openspec/changes/add-session-refresh/
 ├── proposal.md   # 目标、边界、验收、风险
 └── tasks.md      # 有序 checkbox 任务及每项完成后的检查结果
 ```
@@ -73,12 +73,12 @@ changes/add-session-refresh/
 用户批准这份具体计划后开始执行：
 
 ```bash
-ssf workflow start changes/add-session-refresh \
+ssf workflow start openspec/changes/add-session-refresh \
   --path planned \
   --confirm \
   --reason "用户已批准 proposal.md 与 tasks.md"
 
-ssf workflow complete changes/add-session-refresh \
+ssf workflow complete openspec/changes/add-session-refresh \
   --verification-command "npm test"
 ```
 
@@ -146,7 +146,7 @@ Legacy:  按已有状态恢复；必要时才进入 contract-builder
 用户决定带着已知问题结束时，可以显式记录风险：
 
 ```bash
-ssf workflow complete changes/example \
+ssf workflow complete openspec/changes/example \
   --accept-risk \
   --confirm \
   --reason "接受已记录的兼容性限制，后续单独处理"
@@ -157,8 +157,8 @@ ssf workflow complete changes/example \
 恢复已有任务：
 
 ```bash
-ssf resume changes/example
-ssf checkpoint list changes/example
+ssf resume openspec/changes/example
+ssf checkpoint list openspec/changes/example
 ```
 
 缺失或损坏的授权记录、审查结果或 Git 范围信息会明确报错；工具不会用默认值伪造通过。完整状态与兼容规则见 [状态机文档](docs/state-machine.md)。
@@ -168,13 +168,13 @@ ssf checkpoint list changes/example
 默认在当前 checkout 创建特性分支，减少目录切换和路径漂移：
 
 ```bash
-ssf isolate changes/example
+ssf isolate openspec/changes/example
 ```
 
 只有需要同时维护多个 checkout 时才使用 worktree：
 
 ```bash
-ssf isolate changes/example --worktree
+ssf isolate openspec/changes/example --worktree
 ```
 
 隔离信息会记录目标仓库、分支和路径；恢复时必须匹配这份记录。`ssf finish` 只处理已验证的隔离分支，验证失败会保留分支和工作目录供修复。
@@ -254,13 +254,6 @@ gemini extensions install https://github.com/hongjunwu/spec-superflow
 
 项目借鉴 [OpenSpec](https://github.com/Fission-AI/OpenSpec) 的规格组织与 [Superpowers](https://github.com/obra/superpowers) 的 TDD、调试和审查纪律，但运行时不依赖二者。
 
-## 关注「码哥跳动」
-
-<p align="center">
-  <img src="assets/magebyte-wechat.jpg" alt="码哥跳动微信公众号二维码" width="220">
-</p>
-
-<p align="center">扫码关注公众号「码哥跳动」，获取 AI 编程工作流、工程实践和 spec-superflow 项目更新。</p>
 
 ## 开发
 

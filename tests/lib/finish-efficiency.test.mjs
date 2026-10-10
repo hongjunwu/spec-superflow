@@ -17,12 +17,12 @@ test('finish invoked inside isolation merges into the actual target and never fo
   fs.writeFileSync(join(main, '.gitignore'), 'changes/\n');
   git(main, 'add', '.'); git(main, 'commit', '-m', 'base');
   git(main, 'worktree', 'add', wt, '-b', 'demo');
-  const change = join(wt, 'changes', 'demo');
+  const change = join(wt, 'openspec', 'changes', 'demo');
   fs.mkdirSync(change, { recursive: true });
   fs.writeFileSync(join(change, '.spec-superflow.yaml'), 'state: closing\nworkflow: full\n');
   fs.mkdirSync(join(change, '.superpowers', 'sdd', 'reviews', 'snapshots'), { recursive: true });
   fs.writeFileSync(join(change, '.superpowers', 'sdd', 'reviews', 'snapshots', 'final.md'), 'Final evidence');
-  const oldTarget = join(main, 'changes', 'demo');
+  const oldTarget = join(main, 'openspec', 'changes', 'demo');
   fs.mkdirSync(oldTarget, { recursive: true });
   fs.writeFileSync(join(oldTarget, 'original-note.md'), 'Original user note');
   fs.writeFileSync(join(oldTarget, '.spec-superflow.yaml'), 'state: executing\nworkflow: full\n');
@@ -37,8 +37,8 @@ test('finish invoked inside isolation merges into the actual target and never fo
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.equal(fs.readFileSync(join(main, 'feature.txt'), 'utf8'), 'feature');
   assert.equal(fs.existsSync(wt), false);
-  assert.equal(fs.readFileSync(join(main, 'changes', 'demo', '.superpowers', 'sdd', 'reviews', 'snapshots', 'final.md'), 'utf8'), 'Final evidence');
-  assert.match(fs.readFileSync(join(main, 'changes', 'demo', '.spec-superflow.yaml'), 'utf8'), /state: closing/);
+  assert.equal(fs.readFileSync(join(main, 'openspec', 'changes', 'demo', '.superpowers', 'sdd', 'reviews', 'snapshots', 'final.md'), 'utf8'), 'Final evidence');
+  assert.match(fs.readFileSync(join(main, 'openspec', 'changes', 'demo', '.spec-superflow.yaml'), 'utf8'), /state: closing/);
   const archived = readIsolationContext(oldTarget).change_archive;
   assert.equal(fs.readFileSync(join(archived.archive, 'previous-target', 'original-note.md'), 'utf8'), 'Original user note');
 });
@@ -51,7 +51,7 @@ test('branch-only finish switches to its recorded target and retains the checkou
   git('init', '-b', 'main');
   fs.writeFileSync(join(root, '.gitignore'), 'changes/\n');
   git('add', '.'); git('commit', '-m', 'base'); git('switch', '-c', 'demo');
-  const dir = join(root, 'changes', 'demo');
+  const dir = join(root, 'openspec', 'changes', 'demo');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(join(dir, '.spec-superflow.yaml'), 'state: closing\n');
   fs.writeFileSync(join(root, 'feature.txt'), 'feature');

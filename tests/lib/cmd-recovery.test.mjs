@@ -229,8 +229,8 @@ describe('ssf resume and switch', () => {
   });
 
   it('reports when resume automatically selects the only active change', () => {
-    const changesDir = join(root, 'changes');
-    mkdirSync(changesDir);
+    const changesDir = join(root, 'openspec', 'changes');
+    mkdirSync(changesDir, { recursive: true });
     const change = join(changesDir, 'alpha');
     mkdirSync(change);
     writeFileSync(join(change, '.spec-superflow.yaml'), 'state: specifying\nworkflow: full\n');

@@ -56,10 +56,10 @@ function makeRepo(dir, { pkg = { name: 'main', version: '0.0.0', scripts: { test
   writeFileSync(join(dir, 'README.md'), 'x');
   // finish 的主干验证默认执行 `npm test`（cwd=主仓库根）。
   if (pkg) writeFileSync(join(dir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n');
-  // 与真实仓库一致：changes/ 是 planning 产物，gitignore 忽略。缺少它时
+  // 与真实仓库一致：openspec/changes/ 是 planning 产物，gitignore 忽略。缺少它时
   // ensure-branch 复制的 change 目录会（a）污染 worktree 的 status 干净检查、
   // （b）被 git add -A 提交进隔离分支后与主仓库未跟踪文件在 merge 时冲突。
-  writeFileSync(join(dir, '.gitignore'), '/changes\n');
+  writeFileSync(join(dir, '.gitignore'), '/openspec/changes\n');
   git(dir, 'init', '-q', '--initial-branch=main');
   git(dir, 'add', '-A');
   git(dir, 'commit', '-q', '-m', 'init');
@@ -71,7 +71,7 @@ function makeRepo(dir, { pkg = { name: 'main', version: '0.0.0', scripts: { test
 function createIsolatedWorktree(base, name, repoOpts) {
   const main = join(base, 'main');
   makeRepo(main, repoOpts);
-  const changeDir = join(main, 'changes', name);
+  const changeDir = join(main, 'openspec', 'changes', name);
   mkdirSync(changeDir, { recursive: true });
   const r = spawnSync(process.execPath, [ENSURE, changeDir, name, '--worktree'], {
     encoding: 'utf8',
@@ -422,7 +422,7 @@ describe('ssf finish — 一键收尾（worktree-lifecycle R3/R5）', () => {
     tempDirs.push(base);
     const main = join(base, 'main');
     makeRepo(main);
-    const changeDir = join(main, 'changes', 'finish-none');
+    const changeDir = join(main, 'openspec', 'changes', 'finish-none');
     mkdirSync(changeDir, { recursive: true });
 
     const r = runFinish(changeDir, main);

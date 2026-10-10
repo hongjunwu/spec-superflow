@@ -2,12 +2,13 @@
 // project's published baseline and verified later by the closing guard.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import {
   extractRequirementsSection,
   parseDeltaSpec,
   Validator,
 } from '../../dist/index.js';
+import { baselineSpecFile, baselineSpecsRoot, projectRootForChange } from './layout.mjs';
 import { findCanonicalSpecFiles, relativeSpecPath, validateSpecPathLayout } from './spec-paths.mjs';
 
 const DELTA_HEADER_RE = /^##\s+(ADDED|MODIFIED|REMOVED|RENAMED)\s+Requirements\s*$/im;
@@ -34,7 +35,7 @@ function capabilityFromSpecFile(changeDir, file) {
 }
 
 function targetPath(projectRoot, capability) {
-  return join(projectRoot, 'specs', capability, 'spec.md');
+  return baselineSpecFile(projectRoot, capability);
 }
 
 function requirementIndex(blocks, name) {
@@ -218,7 +219,7 @@ export function applyDeltaToBaselineDetailed(baselineContent, deltaContent, capa
     const index = requirementIndex(blocks, block.name);
     if (index === -1) {
       assertNoNearRequirementMatch(blocks, block.name, 'modify');
-      throw new Error(`Cannot modify missing requirement '${block.name}' in '${capability}'.`);
+      throw new Error(`Cannot modify missing requirement '${block.name}' in '${capability}'. The published baseline has no such requirement — delta operations describe changes to the specification baseline, not to the code. If this behavior was never spec'd before, use ADDED Requirements instead.`);
     }
     if (sameRequirement(blocks[index], block)) {
       operations.push({ operation: 'MODIFIED', status: 'skipped' });
@@ -270,12 +271,11 @@ export function applyDeltaToBaseline(baselineContent, deltaContent, capability) 
 
 export function resolvePublicationContext(changeDir) {
   const absoluteChangeDir = resolve(changeDir);
-  const changesDir = dirname(absoluteChangeDir);
-  const projectRoot = basename(changesDir) === 'changes' ? dirname(changesDir) : dirname(absoluteChangeDir);
+  const projectRoot = projectRootForChange(absoluteChangeDir);
   return {
     changeDir: absoluteChangeDir,
     projectRoot,
-    baselineSpecsDir: join(projectRoot, 'specs'),
+    baselineSpecsDir: baselineSpecsRoot(projectRoot),
   };
 }
 

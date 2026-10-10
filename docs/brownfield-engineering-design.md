@@ -90,7 +90,7 @@ Migration
 ## 4. 工件布局
 
 ```text
-changes/<change>/
+openspec/changes/<change>/
 ├── proposal.md
 ├── specs/
 │   └── <capability>/spec.md

@@ -3,6 +3,7 @@ import { workflowPolicy } from './workflow-policy.mjs';
 import fs from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { describeWaves, describeReviews, readPlan, validatePlan } from './execution-plan.mjs';
+import { changesRoot } from './layout.mjs';
 import { listCheckpoints, listHandoffs } from './sdd-overlay.mjs';
 import { readState } from './state-loader.mjs';
 
@@ -25,7 +26,7 @@ export class RecoveryError extends Error {
 export function resolveChangeTarget(input, cwd = process.cwd()) {
   if (hasText(input)) return inspectExplicitTarget(input, cwd);
 
-  const candidates = listRecognizableChanges(join(cwd, 'changes'))
+  const candidates = listRecognizableChanges(changesRoot(cwd))
     .filter(change => !['closing', 'abandoned'].includes(change.state)
       || (change.state === 'closing' && ['pending', 'verify-pending', 'cleanup-pending'].includes(readIsolationContext(change.path)?.finish_status)));
   if (candidates.length === 1) return { ...candidates[0], selection: 'only-active' };
@@ -290,7 +291,7 @@ function hasText(value) {
 function inspectExplicitTarget(input, cwd) {
   const requested = input.trim();
   const directPath = resolve(cwd, requested);
-  const changesPath = resolve(cwd, 'changes', requested);
+  const changesPath = resolve(changesRoot(cwd), requested);
   const targetPath = [directPath, changesPath].find(isRecognizableChange);
 
   if (!targetPath) {

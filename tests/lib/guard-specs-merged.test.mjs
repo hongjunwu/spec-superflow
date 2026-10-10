@@ -10,7 +10,7 @@ import { runGuard } from '../../scripts/guard/guard.mjs';
 
 function makeChangeFixture(withDelta) {
   const repo = mkdtempSync(join(tmpdir(), 'ssf-specs-merged-'));
-  const dir = join(repo, 'changes', 'test');
+  const dir = join(repo, 'openspec', 'changes', 'test');
   mkdirSync(join(dir, 'specs', 'test'), { recursive: true });
   writeFileSync(join(dir, 'proposal.md'), '# Test\n\n## Why\nTest.\n\n## What Changes\n- Test.\n');
   writeFileSync(join(dir, 'design.md'), '# Design\n\n## Context\nTest.\n\n## Goals\nTest.\n\n## Decisions\n\n### Decision 1\n- Choice: Test\n- Rationale: Test\n\n## Risks And Trade-Offs\nNone.\n');
@@ -79,7 +79,7 @@ async function runClosingGuard(fixture, { extraState = '', synchronize = false, 
       if (sync.exitCode !== 0) throw new Error(`${sync.output.stdout}\n${sync.output.stderr}`);
     }
     if (mutateSource) appendFileSync(join(dir, 'specs', 'test', 'spec.md'), '\n<!-- changed after publication -->\n');
-    if (mutateBaseline) appendFileSync(join(repo, 'specs', 'test', 'spec.md'), '\n<!-- changed after publication -->\n');
+    if (mutateBaseline) appendFileSync(join(repo, 'openspec', 'specs', 'test', 'spec.md'), '\n<!-- changed after publication -->\n');
     const recommendation = await runCli(['execution', 'recommend', dir,
       '--wave', 'close:serial:1.1']);
     if (recommendation.exitCode !== 0) throw new Error(`${recommendation.output.stdout}\n${recommendation.output.stderr}`);
