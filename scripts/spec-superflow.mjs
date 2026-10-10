@@ -225,6 +225,10 @@ export async function dispatchCli(args, {
 }
 
 async function main() {
+  // Legacy Windows consoles render emoji as □□□; swap them for ASCII markers
+  // before any command output. No-op off Windows, on pipes, or with SSF_UTF8.
+  const { installAsciiSafeOutput } = await import('./lib/ascii-safe.mjs');
+  installAsciiSafeOutput();
   const result = await dispatchCli(process.argv.slice(2));
   process.exitCode = result.exitCode;
 }

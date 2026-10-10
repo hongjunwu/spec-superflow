@@ -977,6 +977,13 @@ Checkpoint 是任务级恢复上下文。`result-ready` handoff 在继续受影�
 
 ## 故障排查
 
+### Windows 终端 emoji 显示为 □□□
+
+旧版 conhost（默认 GBK 代码页 936）缺少 emoji 字形。CLI 在 Windows 的 TTY 上自动把状态符号替换为 ASCII 等价物（`✅→[OK]`、`❌→[FAIL]`、`🔴→[E]` 等），无需任何配置。两个例外：
+
+- 输出被重定向或管道时保持 UTF-8（编辑器和 CI 日志渲染正常）；
+- 想保留 emoji：设置环境变量 `SSF_UTF8=1`，或改用 Windows Terminal / 执行 `chcp 65001`。
+
 ### Agent 找不到 skill
 
 - 检查 skill 目录名是否与 skill 名一致
