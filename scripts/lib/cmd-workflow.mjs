@@ -3,6 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { resolve, relative, isAbsolute, sep } from 'node:path';
 import { parseTasks } from './task-parser.mjs';
 import { blockingPlanFailures, createPlan, readPlan, readReviewReceiptForDiagnostics, reviewTargets, validatePlan, writePlan, writePlanRevision, describeReviews } from './execution-plan.mjs';
+import { parseTestCount } from './test-count.mjs';
 import { readIsolationContext, resolveIsolationChange } from './isolation-context.mjs';
 import { computeArtifactsHash, computeContractHash } from './hash.mjs';
 import { runGuard } from '../guard/guard.mjs';
@@ -29,6 +30,8 @@ const OPTIONS = {
   path: { type: 'string' },
   scope: { type: 'string' },
   'accept-risk': { type: 'boolean', default: false },
+  'expect-tests': { type: 'string' },
+  'no-tests-ok': { type: 'boolean', default: false },
   'dry-run': { type: 'boolean', default: false },
   'task-count': { type: 'string' },
   'file-count': { type: 'string' },
@@ -257,12 +260,43 @@ function complete(dir, values) {
     state.completion_outcome = 'accepted-risk';
   } else {
     const command = safeText(values['verification-command'], '--verification-command');
+    const expectTests = values['expect-tests'] === undefined ? null : parseCount(values['expect-tests'], 'expect-tests');
+    const noTestsOk = values['no-tests-ok'] === true;
+    if (noTestsOk && expectTests === null) throw new UsageError('--no-tests-ok only matters with --expect-tests; a plain verification never demands test-count evidence');
+    if (expectTests !== null && noTestsOk && (!values.confirm || !values.reason)) {
+      throw new Error('Accepting missing test evidence requires explicit user approval (--confirm --reason)');
+    }
     const before = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-    const result = spawnSync(command, { cwd: root, shell: true, stdio: values.json ? 'pipe' : 'inherit', encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: 600000 });
-    if (values.json) process.stderr.write((result.stdout ?? '') + (result.stderr ?? ''));
-    state.test_result = `${result.status === 0 ? 'pass' : 'fail'}: ${command}`;
+    // Output is always captured: the evidence gate parses it for a recognizable
+    // test-execution count, and the full text is forwarded to stderr so the
+    // console experience stays the same.
+    const result = spawnSync(command, { cwd: root, shell: true, stdio: 'pipe', encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: 600000 });
+    const commandOutput = (result.stdout ?? '') + (result.stderr ?? '');
+    process.stderr.write(commandOutput);
+    const evidence = parseTestCount(commandOutput);
+    if (result.status !== 0) {
+      state.test_result = `fail: ${command}`;
+      writeState(dir, state);
+      throw new Error(`Verification failed (${result.error?.message ?? result.signal ?? result.status}); repair within executing and retry when evidence changes`);
+    }
+    const evidenceOk = evidence && (expectTests === null || evidence.count >= expectTests);
+    if (evidenceOk) {
+      state.test_result = `pass: ${command} (tests run: ${evidence.count})`;
+    } else if (expectTests === null) {
+      // No threshold demanded: keep the legacy exit-code-only semantics, but a
+      // parsed count above still lands in test_result for the record.
+      state.test_result = `pass: ${command}`;
+    } else if (noTestsOk) {
+      state.test_result = `pass: ${command} (no test evidence accepted: ${values.reason})`;
+    } else {
+      const detail = evidence
+        ? `${evidence.count} tests ran (${evidence.source}), below --expect-tests ${expectTests}`
+        : 'no recognizable test execution in the verification output — BUILD SUCCESS alone is not evidence';
+      state.test_result = `fail: ${command} (test evidence: ${detail})`;
+      writeState(dir, state);
+      throw new Error(`Verification evidence gate failed: ${detail}. Either run a command that actually executes tests, or accept the gap explicitly with --no-tests-ok --confirm --reason.`);
+    }
     writeState(dir, state);
-    if (result.status !== 0) throw new Error(`Verification failed (${result.error?.message ?? result.signal ?? result.status}); repair within executing and retry when evidence changes`);
     if (state.workflow_variant === 'planned') {
       const prefix = execFileSync('git', ['-C', dir, 'rev-parse', '--show-prefix'], { encoding: 'utf8' }).trim();
       const dirty = execFileSync('git', ['-C', root, 'status', '--porcelain', '--untracked-files=all', '--', '.', `:(exclude,literal)${prefix.replace(/\/$/, '')}`], { encoding: 'utf8' }).trim();
@@ -658,7 +692,7 @@ function fail(message, exitCode) {
 }
 
 function printHelp() {
-  console.log('New tasks: ssf workflow start <dir> --path direct --scope <request> | --path planned --confirm --reason <approval> [--mode sdd]\nComplete: ssf workflow complete <dir> --verification-command <command> | --accept-risk --confirm --reason <decision>\nPreflight: ssf workflow complete <dir> --dry-run — list every closure blocker with its fix, no state change\nThe following commands are legacy compatibility:');
+  console.log('New tasks: ssf workflow start <dir> --path direct --scope <request> | --path planned --confirm --reason <approval> [--mode sdd]\nComplete: ssf workflow complete <dir> --verification-command <command> [--expect-tests <min>] | --accept-risk --confirm --reason <decision>\nEvidence: --expect-tests <min> requires the verification output to prove at least <min> tests ran; BUILD SUCCESS alone is rejected. --no-tests-ok --confirm --reason accepts the gap explicitly.\nPreflight: ssf workflow complete <dir> --dry-run — list every closure blocker with its fix, no state change\nThe following commands are legacy compatibility:');
   console.log(`Usage:
   ssf workflow recommend <change-dir> [--task-count <n>] [--file-count <n>] [--config-doc-only yes|no|unknown] [--schema-api-change yes|no|unknown] [--new-module yes|no|unknown] [--behavioral-constraint-change yes|no] [--cross-module-change yes|no] [--uncertainty low|high|unknown] [--request-kind standard|incident] [--affected-path <path>] [--production-behavior yes|no|unknown] [--public-boundary yes|no|unknown] [--installer yes|no|unknown] [--state-machine yes|no|unknown] [--external-side-effect yes|no|unknown] [--data-permission-config-semantics yes|no|unknown] [--expected-behavior-clear yes|no|unknown] [--verification-reproducible yes|no|unknown] [--impact-paths-complete yes|no|unknown] [--json]
   ssf workflow select <change-dir> --mode full|hotfix|tweak|quick|lightweight --confirm --reason <text> [--scope-confirmation <text>] [--acknowledge-recommendation] [--verification tdd|new-test|bounded] [--json]

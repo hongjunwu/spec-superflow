@@ -15,6 +15,8 @@ Read `SSF resume <change-dir> --json`. In `executing`, complete verification and
 
 Use `SSF workflow complete <dir> --verification-command "<required check command>"`. It runs final verification once; do not run the identical full suite immediately before invoking it. Planned execution additionally checks completed tasks, current full-range/wave review and any delta-spec publication. Direct execution needs no plan or review receipt. Ordinary failures stay in executing for focused repair. Do not add DP-6/DP-7 or another approval to authorized code delivery.
 
+The verification command must actually execute tests and print a recognizable count (surefire `Tests run:`, `N passed`, jest/node:test summaries). Prefer `SSF workflow complete <dir> --verification-command "<cmd>" --expect-tests <min>`: when the output proves fewer tests than `<min>` or proves none at all, the gate records a failed verification even on exit code 0 — a bare `BUILD SUCCESS` is not evidence. Only accept a real gap with `--no-tests-ok --confirm --reason`, which records the decision in `test_result`.
+
 A final review receipt only certifies the exact commit it names: **any commit after the review invalidates it**. Closing therefore has one valid order — run it top to bottom, never interleave:
 
 1. Finish implementation and check off tasks in `tasks.md`.
