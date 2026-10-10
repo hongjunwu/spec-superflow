@@ -33,6 +33,9 @@ const BUILTIN_DEFAULTS = {
   spec_publication_receipt: null,
   review_base: null,
   target_branch: null,
+  // Multi-repo: per-partner start anchors as a JSON string in the flat state
+  // file (the mini YAML parser handles top-level scalars only).
+  partner_anchors: null,
   change_name: null,
   last_transition: null,
   last_transition_from: null,
@@ -53,7 +56,11 @@ export function readState(changeDir) {
 
   const raw = fs.readFileSync(filePath, 'utf-8');
   const parsed = parseYaml(raw);
-  return { ...BUILTIN_DEFAULTS, ...parsed };
+  const state = { ...BUILTIN_DEFAULTS, ...parsed };
+  if (typeof state.partner_anchors === 'string' && state.partner_anchors.startsWith('{')) {
+    try { state.partner_anchors = JSON.parse(state.partner_anchors); } catch { /* keep raw for diagnosis */ }
+  }
+  return state;
 }
 
 /**
@@ -89,6 +96,7 @@ export function writeState(changeDir, state) {
   lines.push('# === Review anchor (recorded on the first entry into executing) ===');
   lines.push(`review_base: ${state.review_base ?? 'null'}`);
   lines.push(`target_branch: ${state.target_branch ?? 'null'}`);
+  lines.push(`partner_anchors: ${state.partner_anchors ? JSON.stringify(state.partner_anchors) : 'null'}`);
   lines.push('');
   lines.push('# === Metadata ===');
   lines.push(`change_name: ${state.change_name ?? path.basename(changeDir)}`);

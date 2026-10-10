@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, lstatSync, realpathSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { resolve, relative, isAbsolute, sep } from 'node:path';
+import { resolve, relative, isAbsolute, sep, basename } from 'node:path';
 import { parseTasks } from './task-parser.mjs';
 import { blockingPlanFailures, createPlan, readPlan, readReviewReceiptForDiagnostics, reviewTargets, validatePlan, writePlan, writePlanRevision, describeReviews } from './execution-plan.mjs';
 import { parseTestCount } from './test-count.mjs';
@@ -25,6 +25,8 @@ import {
 import { readState, writeState } from './state-loader.mjs';
 import { isBrownfieldChange, TECHNICAL_VALIDATOR_VERSION, validateTechnicalChange } from './technical-validation.mjs';
 import { listOpenTechnicalConflicts } from './technical-conflicts.mjs';
+import { projectRootForChange } from './layout.mjs';
+import { loadPartnerRepos, partnerStatus, protectedDirectCommits, provisionPartner } from './partner-repos.mjs';
 
 const OPTIONS = {
   path: { type: 'string' },
@@ -229,6 +231,19 @@ function start(dir, values) {
     if (isolation?.target_branch) state.target_branch = isolation.target_branch;
     else if (!alreadyActive) state.target_branch = gitLine(dir, ['branch', '--show-current']) || null;
   }
+  // Multi-repo: provision every configured partner (clone when missing, cut a
+  // development branch from the configured baseline) and record its baseline
+  // head as a write-once anchor, the same trust model as review_base. A
+  // re-approved change never moves an existing partner anchor forward.
+  const partners = loadPartnerRepos(projectRootForChange(dir));
+  if (partners.length > 0) {
+    const changeName = state.change_name ?? basename(dir);
+    state.partner_anchors = state.partner_anchors ?? {};
+    for (const partner of partners) {
+      const provisioned = provisionPartner(partner, changeName);
+      if (!state.partner_anchors[partner.name]) state.partner_anchors[partner.name] = provisioned.head;
+    }
+  }
   state.last_transition = new Date().toISOString();
   writeState(dir, state);
   return print({ ok: true, state: 'executing', path: values.path, mode: readPlan(dir)?.mode ?? 'inline' }, values.json);
@@ -302,6 +317,10 @@ function complete(dir, values) {
       const dirty = execFileSync('git', ['-C', root, 'status', '--porcelain', '--untracked-files=all', '--', '.', `:(exclude,literal)${prefix.replace(/\/$/, '')}`], { encoding: 'utf8' }).trim();
       const after = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
       if (before !== after || dirty) throw new Error('Implementation differs from the reviewed snapshot; commit and review affected changes before completion');
+    }
+    const partners = partnerGate(dir, state);
+    if (partners.failures.length > 0) {
+      throw new Error(`Partner repositories block completion: ${partners.failures.join(' | ')}`);
     }
     let detail = '';
     const output = { write(text) { detail += text; } };
@@ -403,6 +422,20 @@ function completeDryRun(dir, state, values) {
     }
   } catch (error) {
     add('guard', false, guardDetail.trim() || error.message, null);
+  }
+
+  let partners;
+  try {
+    partners = partnerGate(dir, state);
+  } catch (error) {
+    partners = { configured: -1, failures: [error.message] };
+  }
+  if (partners.configured !== 0) {
+    add('partner repositories', partners.failures.length === 0,
+      partners.failures.length ? partners.failures.join(' | ') : `${partners.configured} configured, all clean and anchored`,
+      partners.failures.length
+        ? 'move direct protected-branch commits to a development branch, commit or stash the dirty state, then re-run this preflight'
+        : null);
   }
 
   const blocked = checks.filter(check => !check.pass).length;
@@ -613,6 +646,33 @@ function requireStateFile(changeDir) {
   if (!existsSync(join(changeDir, '.spec-superflow.yaml'))) {
     throw new Error('Workflow state is missing; run "ssf state init <change-dir>" first');
   }
+}
+
+// Shared partner-repo gate for complete and its dry-run: a partner with an
+// anchor must be clean and must not carry direct commits on a protected
+// branch since that anchor — exactly the "edited master in place" drift.
+function partnerGate(dir, state) {
+  const partners = loadPartnerRepos(projectRootForChange(dir));
+  if (partners.length === 0) return { configured: 0, failures: [] };
+  const failures = [];
+  for (const partner of partners) {
+    const anchor = state.partner_anchors?.[partner.name];
+    if (!anchor) {
+      failures.push(`partner '${partner.name}' has no recorded start anchor (the change was approved before partner tracking existed)`);
+      continue;
+    }
+    const status = partnerStatus(partner);
+    if (!status.exists) {
+      failures.push(`partner '${partner.name}' is missing at ${partner.path}`);
+      continue;
+    }
+    if (status.dirty) failures.push(`partner '${partner.name}' has uncommitted changes on '${status.branch}'`);
+    const commits = protectedDirectCommits(partner, anchor, status);
+    if (commits.length) {
+      failures.push(`partner '${partner.name}' has ${commits.length} direct commit(s) on protected branch '${status.branch}' since the start anchor: ${commits.join('; ')}`);
+    }
+  }
+  return { configured: partners.length, failures };
 }
 
 function appendDecision(existing, summary) {

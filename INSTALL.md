@@ -847,6 +847,31 @@ ls .pi/skills   # 应有 12 个 skill 目录
 
 ## 工作流目录约定
 
+### 多仓库变更（partner repos）
+
+跨系统的变更（如后端接口 + 前端调用）在项目根 `spec-superflow.config.json` 里声明受控的伙伴仓库：
+
+```json
+{
+  "partner_repos": [
+    {
+      "name": "partnerSalary-web",
+      "path": "../partnerSalary-web",
+      "url": "https://git.example.com/hr/partnerSalary-web.git",
+      "branch": "master"
+    }
+  ]
+}
+```
+
+- `name`：安全标识，用于锚点、闸门报告和 traceability 的 FILE 路径前缀（`name:src/api/salary.ts`）
+- `path`：相对主仓根解析；`url` 配置且本地缺失时 `workflow start` 自动克隆
+- `branch`：基线分支（默认 `master`）。开工时自动 fetch → 切基线 → `--ff-only` 拉最新 → 从基线拉出开发分支 `<change-name>-<name>`（幂等：已在开发分支则不动，基线更新永不强制拉取）
+- 锚点 write-once：partner 的基线 HEAD 记入 state（同 `review_base` 信任模型），重新批准不变更锚点
+- 收口闸门：partner 工作树脏、或在 protected 分支（main/master）上有锚点以来的直接提交 → `workflow complete` 阻塞，`--dry-run` 体检会列出具体提交
+
+不配置 `partner_repos` 时以上行为全部不生效。
+
 项目采用 OpenSpec 形式的目录布局——发布基线与活跃变更收拢在同一个 `openspec/` 父目录下：
 
 ```text

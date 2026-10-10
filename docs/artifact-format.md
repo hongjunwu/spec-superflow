@@ -118,7 +118,7 @@ Profile: brownfield            <!-- 不是列表项：不识别 -->
 - FILE 必须被至少一个 design_item **和**至少一个 task 引用
 - proposal 声明的 boundary 必须有对应 kind 的 design item（`api` → API-*, `database` → DB-*, `integration` → INT-*, `public-model` → MODEL-*, `migration` → MIGRATION-*）
 - technical-design.md 的每个 `### <ID>:` 标题必须在 traceability 里声明，反之亦然
-- FILE 的 `path` 必须是安全相对路径（拒绝绝对路径与 `..`）
+- FILE 的 `path` 必须是安全相对路径（拒绝绝对路径与 `..`）；伙伴仓库的文件用 `<partner-name>:<relative-path>` 前缀（如 `partnerSalary-web:src/api/user.ts`），前缀必须与 `spec-superflow.config.json` 的 `partner_repos[].name` 一致，冒号后的部分仍走安全相对路径规则
 
 **tasks 三处逐字同步**（最易漏）：traceability 里 task 声明的 `requirements` / `design_items` / `files` / `tests` 每个引用，都必须出现在 tasks.md 该任务条目（checkbox 行 + 缩进续行）的 `Refs:` 行里，ID 逐字一致。
 

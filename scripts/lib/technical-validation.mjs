@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseTasks } from './task-parser.mjs';
+import { projectRootForChange } from './layout.mjs';
+import { loadPartnerRepos } from './partner-repos.mjs';
 import { findCanonicalSpecFiles, relativeSpecPath } from './spec-paths.mjs';
 
 export const TECHNICAL_VALIDATOR_VERSION = 1;
@@ -278,7 +280,9 @@ function validateTraceability(trace, { requirements, brownfield }, headings, bou
 
   for (const [id, item] of maps.files) {
     requireIdPrefix(id, 'FILE', 'files', issues);
-    if (!isSafeRelativePath(item?.path)) issues.push(issue('traceability.json', `${id} has unsafe file path '${item?.path ?? ''}'`));
+    if (!isTraceableFilePath(item?.path, changeDir)) {
+      issues.push(issue('traceability.json', `${id} has unsafe file path '${item?.path ?? ''}'`));
+    }
   }
 
   // Coverage is directional and must be checked in both directions: a design
@@ -415,8 +419,12 @@ function validateTaskBody(id, item, maps, body, issues) {
     .filter(value => typeof value === 'string' && value.trim() && !/[*?[\]{}]/.test(value))
     .map(value => value.replace(/\\/g, '/'));
   if (declared.length === 0) return;
-  if (!declared.some(value => body.includes(value) || body.includes(path.posix.basename(value)))) {
-    issues.push(issue('tasks.md', `Task ${id} must name the file it changes (${declared.join(', ')})`));
+  // A partner-repo path is `name:rest`; the task body typically names the
+  // in-repo part, so match on both the full value and the part after ':'.
+  const matchValues = declared.map(value => (value.includes(':') ? value.slice(value.indexOf(':') + 1) : value));
+  const displays = matchValues.length > 0 ? matchValues : declared;
+  if (!matchValues.some(value => body.includes(value) || body.includes(path.posix.basename(value)))) {
+    issues.push(issue('tasks.md', `Task ${id} must name the file it changes (${displays.join(', ')})`));
   }
 }
 
@@ -452,6 +460,27 @@ function isSafeRelativePath(value) {
   const normalized = value.replace(/\\/g, '/');
   if (path.posix.isAbsolute(normalized) || path.win32.isAbsolute(value)) return false;
   return !normalized.split('/').includes('..');
+}
+
+/**
+ * A controlled file lives either in the primary repo (a safe relative path)
+ * or in a configured partner repo (`<partner-name>:<relative path>`). The
+ * partner name must exist in spec-superflow.config.json so a typo cannot
+ * smuggle an uncontrolled path through, and the remainder keeps the same
+ * safety rules as a primary-repo path.
+ */
+function isTraceableFilePath(value, changeDir) {
+  if (typeof value !== 'string' || !value.includes(':')) return isSafeRelativePath(value);
+  const separator = value.indexOf(':');
+  const partnerName = value.slice(0, separator);
+  const rest = value.slice(separator + 1);
+  try {
+    const partners = loadPartnerRepos(projectRootForChange(changeDir));
+    if (!partners.some(partner => partner.name === partnerName)) return false;
+  } catch {
+    return false;
+  }
+  return isSafeRelativePath(rest);
 }
 
 function isSafeId(value) {
